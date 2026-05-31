@@ -754,7 +754,6 @@ function openVideoModal(video) {
   document.body.style.overflow = 'hidden'; // stop page scrolling
 
   // Reset scrollbar position to the top after DOM rendering
-  const details = document.querySelector('.modal-details');
   if (details) {
     details.scrollTop = 0;
     setTimeout(() => { details.scrollTop = 0; }, 50);
