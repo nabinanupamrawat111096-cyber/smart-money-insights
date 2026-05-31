@@ -20,7 +20,7 @@
   <meta property="twitter:description" content="Clear, practical guidance on budgeting, saving, investing, and managing debt. No jargon, no get-rich-quick schemes—just honest advice that works.">
   <meta property="twitter:image" content="https://images.unsplash.com/photo-1559526324-4b87b5e36e44?auto=format&fit=crop&w=1200&h=630&q=80">
 
-  <link rel="stylesheet" href="styles.css?v=12">
+  <link rel="stylesheet" href="styles.css?v=13">
   <script src="https://unpkg.com/lightweight-charts@4.1.1/dist/lightweight-charts.standalone.production.js"></script>
 </head>
 <body>
@@ -72,89 +72,92 @@
 
       <!-- 1. HOME VIEW -->
       <section id="home" class="section-view active">
-        <div class="hero-container">
-          <div class="hero-content">
-            <div class="hero-brand-header">
-              <div class="hero-logo-wrapper">
-                <img src="logo.png" alt="Smart Money Insights Logo" class="hero-logo">
+        <div class="hero-section-home">
+          <div class="hero-container">
+            <div class="hero-content">
+              <div class="hero-brand-header">
+                <div class="hero-logo-wrapper">
+                  <img src="logo.png" alt="Smart Money Insights Logo" class="hero-logo">
+                </div>
+                <span class="badge">Practical Financial Education</span>
               </div>
-              <span class="badge">Practical Financial Education</span>
+              <h1 class="hero-title">Smart Money <span class="text-accent-green">Insights</span></h1>
+              <h3 class="hero-subtitle">Your Complete Financial Guide</h3>
+              <p class="hero-desc">We simplify complex market charts, saving strategies, and debt cycles into actionable insights. Powerful, user-friendly tools designed to unlock the full potential of your investments, analyze NEPSE, and take control of your personal finances.</p>
+              <div class="hero-ctas">
+                <a href="#" data-go-to="charts" class="btn-primary">Explore Charts</a>
+                <a href="#" data-go-to="budgeting" class="btn-secondary">Try Calculators</a>
+              </div>
             </div>
-            <h1>Clear financial <br><span class="serif-italic">guidance.</span></h1>
-            <p>We simplify complex market charts, saving strategies, and debt cycles into actionable insights. Practical frameworks designed to empower your wealth-building journey.</p>
-            <div class="hero-ctas">
-              <a href="#" data-go-to="budgeting" class="btn-primary">Try Calculators</a>
-              <a href="#" data-go-to="videos" class="btn-secondary">Watch Analysis</a>
-            </div>
-          </div>
-          
-          <div class="hero-visual nepse-chart-visual">
-            <div class="nepse-chart-widget">
-              <!-- Chart Header -->
-              <div class="chart-widget-header">
-                <div class="chart-title-row">
-                  <div class="chart-symbol-info">
-                    <span class="chart-symbol-name">NEPSE</span>
-                    <span class="chart-symbol-label">Nepal Stock Exchange Index</span>
+            
+            <div class="hero-visual nepse-chart-visual">
+              <div class="nepse-chart-widget">
+                <!-- Chart Header -->
+                <div class="chart-widget-header">
+                  <div class="chart-title-row">
+                    <div class="chart-symbol-info">
+                      <span class="chart-symbol-name">NEPSE</span>
+                      <span class="chart-symbol-label">Nepal Stock Exchange Index</span>
+                    </div>
+                    <div class="chart-live-badge">
+                      <span class="live-dot"></span> Live
+                    </div>
                   </div>
-                  <div class="chart-live-badge">
-                    <span class="live-dot"></span> Live
+                  <div class="chart-price-row" id="nepse-price-display">
+                    <span class="chart-current-price">2,745.32</span>
+                    <span class="chart-price-change positive">+38.67 (+1.43%)</span>
                   </div>
                 </div>
-                <div class="chart-price-row" id="nepse-price-display">
-                  <span class="chart-current-price">2,745.32</span>
-                  <span class="chart-price-change positive">+38.67 (+1.43%)</span>
-                </div>
-              </div>
 
-              <!-- Timeframe & Indicator Controls -->
-              <div class="chart-controls-bar">
-                <div class="chart-timeframes">
-                  <button class="tf-btn" data-tf="1D">1D</button>
-                  <button class="tf-btn active" data-tf="1W">1W</button>
-                  <button class="tf-btn" data-tf="1M">1M</button>
-                  <button class="tf-btn" data-tf="3M">3M</button>
-                  <button class="tf-btn" data-tf="6M">6M</button>
-                  <button class="tf-btn" data-tf="1Y">1Y</button>
+                <!-- Timeframe & Indicator Controls -->
+                <div class="chart-controls-bar">
+                  <div class="chart-timeframes">
+                    <button class="tf-btn" data-tf="1D">1D</button>
+                    <button class="tf-btn active" data-tf="1W">1W</button>
+                    <button class="tf-btn" data-tf="1M">1M</button>
+                    <button class="tf-btn" data-tf="3M">3M</button>
+                    <button class="tf-btn" data-tf="6M">6M</button>
+                    <button class="tf-btn" data-tf="1Y">1Y</button>
+                  </div>
+                  <div class="chart-indicator-toggles">
+                    <button class="ind-btn active" data-ind="sma" title="Simple Moving Average">SMA</button>
+                    <button class="ind-btn" data-ind="ema" title="Exponential Moving Average">EMA</button>
+                    <button class="ind-btn active" data-ind="bb" title="Bollinger Bands">BB</button>
+                    <button class="ind-btn" data-ind="vol" title="Volume">VOL</button>
+                  </div>
                 </div>
-                <div class="chart-indicator-toggles">
-                  <button class="ind-btn active" data-ind="sma" title="Simple Moving Average">SMA</button>
-                  <button class="ind-btn" data-ind="ema" title="Exponential Moving Average">EMA</button>
-                  <button class="ind-btn active" data-ind="bb" title="Bollinger Bands">BB</button>
-                  <button class="ind-btn" data-ind="vol" title="Volume">VOL</button>
+
+                <!-- Main Chart Container -->
+                <div class="chart-canvas-wrapper">
+                  <div id="nepse-main-chart" class="chart-canvas"></div>
                 </div>
-              </div>
 
-              <!-- Main Chart Container -->
-              <div class="chart-canvas-wrapper">
-                <div id="nepse-main-chart" class="chart-canvas"></div>
-              </div>
-
-              <!-- RSI Panel -->
-              <div class="chart-indicator-panel">
-                <div class="indicator-panel-header">
-                  <span class="indicator-label">RSI (14)</span>
-                  <span class="indicator-value" id="rsi-value">58.42</span>
+                <!-- RSI Panel -->
+                <div class="chart-indicator-panel">
+                  <div class="indicator-panel-header">
+                    <span class="indicator-label">RSI (14)</span>
+                    <span class="indicator-value" id="rsi-value">58.42</span>
+                  </div>
+                  <div id="nepse-rsi-chart" class="indicator-canvas"></div>
                 </div>
-                <div id="nepse-rsi-chart" class="indicator-canvas"></div>
-              </div>
 
-              <!-- MACD Panel -->
-              <div class="chart-indicator-panel">
-                <div class="indicator-panel-header">
-                  <span class="indicator-label">MACD (12,26,9)</span>
-                  <span class="indicator-value" id="macd-value">
-                    <span style="color:#2962FF">MACD: 12.5</span>
-                    <span style="color:#FF6D00">Signal: 8.3</span>
-                  </span>
+                <!-- MACD Panel -->
+                <div class="chart-indicator-panel">
+                  <div class="indicator-panel-header">
+                    <span class="indicator-label">MACD (12,26,9)</span>
+                    <span class="indicator-value" id="macd-value">
+                      <span style="color:#2962FF">MACD: 12.5</span>
+                      <span style="color:#FF6D00">Signal: 8.3</span>
+                    </span>
+                  </div>
+                  <div id="nepse-macd-chart" class="indicator-canvas"></div>
                 </div>
-                <div id="nepse-macd-chart" class="indicator-canvas"></div>
-              </div>
 
-              <!-- Chart Footer -->
-              <div class="chart-widget-footer">
-                <span class="chart-source">Data: NEPSE • Updated every trading session</span>
-                <a href="https://www.nepalstock.com/" target="_blank" class="chart-link">nepalstock.com ↗</a>
+                <!-- Chart Footer -->
+                <div class="chart-widget-footer">
+                  <span class="chart-source">Data: NEPSE • Updated every trading session</span>
+                  <a href="https://www.nepalstock.com/" target="_blank" class="chart-link">nepalstock.com ↗</a>
+                </div>
               </div>
             </div>
           </div>
@@ -1211,6 +1214,6 @@
     </div>
   </div>
 
-  <script src="app.js?v=12"></script>
+  <script src="app.js?v=13"></script>
 </body>
 </html>
