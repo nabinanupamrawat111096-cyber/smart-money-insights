@@ -214,46 +214,339 @@ main {
 }
 
 /* Home Section Layout */
-.hero {
-  text-align: center;
-  padding: 3rem 1rem 4rem 1rem;
-  max-width: 800px;
+.hero-container {
+  display: grid;
+  grid-template-columns: 1.15fr 0.85fr;
+  gap: 3.5rem;
+  align-items: center;
+  padding: 3rem 0 5rem 0;
+  max-width: 1200px;
   margin: 0 auto;
+}
+
+.hero-content {
+  text-align: left;
+}
+
+.hero-brand-header {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
 }
 
 .badge {
   background-color: var(--color-secondary);
   color: var(--color-primary);
-  font-size: 0.8rem;
-  font-weight: 600;
+  font-size: 0.75rem;
+  font-weight: 650;
   padding: 0.35rem 0.85rem;
   border-radius: 50px;
   letter-spacing: 0.05em;
   text-transform: uppercase;
-  display: inline-block;
-  margin-bottom: 1.25rem;
   border: 1px solid rgba(27, 77, 62, 0.1);
+  margin-bottom: 0;
 }
 
-.hero h1 {
+.hero-content h1 {
   font-size: 3.25rem;
   line-height: 1.15;
   margin-bottom: 1.5rem;
   letter-spacing: -0.02em;
 }
 
-.hero p {
-  font-size: 1.15rem;
+.hero-content p {
+  font-size: 1.05rem;
   color: var(--color-muted);
-  max-width: 650px;
-  margin: 0 auto 2.5rem auto;
+  margin-bottom: 2rem;
   line-height: 1.6;
+  max-width: 540px;
 }
 
 .hero-ctas {
   display: flex;
-  justify-content: center;
+  justify-content: flex-start;
   gap: 1rem;
+}
+
+/* Hero Right Column Visual Dashboard */
+.hero-visual {
+  position: relative;
+  height: 400px;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  perspective: 1000px;
+}
+
+/* Glassmorphic Cards */
+.floating-card {
+  position: absolute;
+  background: rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.6);
+  border-radius: var(--radius-lg);
+  padding: 1.25rem;
+  box-shadow: 0 8px 32px rgba(27, 77, 62, 0.08);
+  animation: float 6s ease-in-out infinite;
+  animation-delay: var(--float-delay);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  z-index: 10;
+}
+
+.floating-card:hover {
+  transform: translateY(-5px) scale(1.03) !important;
+  box-shadow: 0 15px 40px rgba(27, 77, 62, 0.15);
+  background: rgba(255, 255, 255, 0.85);
+  border-color: rgba(27, 77, 62, 0.2);
+}
+
+@keyframes float {
+  0% { transform: translateY(0px) rotate(0deg); }
+  50% { transform: translateY(-12px) rotate(0.5deg); }
+  100% { transform: translateY(0px) rotate(0deg); }
+}
+
+/* Growth Card Specifics */
+.card-growth {
+  top: 8%;
+  left: 5%;
+  width: 230px;
+}
+
+.card-header-mini {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.5rem;
+}
+
+.card-tag-mini {
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  padding: 0.15rem 0.5rem;
+  border-radius: 4px;
+}
+
+.card-tag-mini.success {
+  background-color: #e6f6f0;
+  color: var(--color-success);
+}
+
+.card-tag-mini.primary {
+  background-color: var(--color-secondary);
+  color: var(--color-primary);
+}
+
+.card-tag-mini.error {
+  background-color: #fff0f0;
+  color: var(--color-error);
+}
+
+.card-percent-mini {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--color-success);
+}
+
+.card-value-mini {
+  font-family: var(--font-serif);
+  font-size: 1.5rem;
+  font-weight: 800;
+  color: var(--color-primary);
+  margin-bottom: 0.5rem;
+}
+
+.mini-chart-svg {
+  width: 100%;
+  height: 45px;
+  overflow: visible;
+}
+
+.pulsing-chart-dot {
+  animation: pulseDot 2s infinite;
+}
+
+@keyframes pulseDot {
+  0% { r: 3.5; opacity: 1; }
+  50% { r: 6; opacity: 0.4; }
+  100% { r: 3.5; opacity: 1; }
+}
+
+/* Budget Card Specifics */
+.card-budget {
+  top: 38%;
+  right: 2%;
+  width: 190px;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.budget-circle-progress {
+  position: relative;
+  width: 44px;
+  height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.circle-bg {
+  stroke: var(--color-border);
+}
+
+.circle-fill {
+  stroke-linecap: round;
+  transform: rotate(-90deg);
+  transform-origin: 50% 50%;
+  animation: circleDraw 2.5s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+@keyframes circleDraw {
+  from { stroke-dasharray: 0, 100; }
+}
+
+.circle-text {
+  position: absolute;
+  font-size: 0.75rem;
+  font-weight: 750;
+  color: var(--color-primary);
+}
+
+.budget-details-mini {
+  display: flex;
+  flex-direction: column;
+}
+
+.mini-label {
+  font-size: 0.75rem;
+  color: var(--color-muted);
+}
+
+.mini-status {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--color-primary);
+}
+
+/* Debt Card Specifics */
+.card-debt {
+  bottom: 8%;
+  left: 10%;
+  width: 210px;
+}
+
+.progress-bar-mini {
+  height: 6px;
+  background-color: var(--color-border);
+  border-radius: 4px;
+  overflow: hidden;
+  margin: 0.5rem 0;
+}
+
+.progress-fill-mini {
+  height: 100%;
+  background-color: var(--color-success);
+  border-radius: 4px;
+  animation: progressFill 2s ease-out forwards;
+}
+
+@keyframes progressFill {
+  from { width: 0%; }
+}
+
+.debt-values-mini {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.75rem;
+  font-weight: 650;
+  color: var(--color-muted);
+}
+
+.success-text {
+  color: var(--color-success);
+  font-weight: 700;
+}
+
+/* Floating Pills */
+.floating-pill {
+  position: absolute;
+  background-color: #ffffff;
+  border-radius: 50px;
+  padding: 0.45rem 1rem;
+  font-size: 0.75rem;
+  font-weight: 700;
+  box-shadow: 0 4px 15px rgba(27, 77, 62, 0.06);
+  border: 1px solid var(--color-border);
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  animation: float 8s ease-in-out infinite alternate;
+  animation-delay: var(--float-delay);
+  z-index: 5;
+}
+
+.pill-nepse {
+  top: 5%;
+  right: 18%;
+}
+
+.pill-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background-color: var(--color-success);
+  display: inline-block;
+}
+
+.pill-sip {
+  bottom: 35%;
+  left: 2%;
+}
+
+/* Radial Glow */
+.visual-glow {
+  position: absolute;
+  width: 320px;
+  height: 320px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(27,77,62,0.12) 0%, rgba(201,162,39,0.06) 50%, rgba(0,0,0,0) 100%);
+  filter: blur(40px);
+  top: 10%;
+  left: 15%;
+  z-index: -1;
+  animation: glowPulse 8s ease-in-out infinite alternate;
+}
+
+@keyframes glowPulse {
+  0% { transform: translate(0, 0) scale(1); opacity: 0.8; }
+  100% { transform: translate(30px, -20px) scale(1.2); opacity: 1; }
+}
+
+@media (max-width: 992px) {
+  .hero-container {
+    grid-template-columns: 1fr;
+    gap: 4rem;
+    text-align: center;
+    padding: 2rem 0;
+  }
+  .hero-content {
+    text-align: center;
+  }
+  .hero-brand-header {
+    justify-content: center;
+  }
+  .hero-content p {
+    margin-left: auto;
+    margin-right: auto;
+  }
+  .hero-ctas {
+    justify-content: center;
+  }
 }
 
 /* Pillar Grid */
