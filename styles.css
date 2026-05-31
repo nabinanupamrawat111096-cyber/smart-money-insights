@@ -1438,7 +1438,8 @@ footer {
   background-color: var(--color-card);
   width: 90%;
   max-width: 800px;
-  max-height: 85vh;
+  height: 85vh;
+  max-height: 800px;
   display: flex;
   flex-direction: column;
   border-radius: var(--radius-xl);
