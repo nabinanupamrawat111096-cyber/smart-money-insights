@@ -542,63 +542,63 @@ function calculateDebtPayoff() {
 const VIDEO_DATABASE = [
   {
     id: 'spotlight',
-    title: 'NEPSE Technical Analysis: Tweezers Bottom & Trends Explained',
+    title: 'NEPSE BREAKOUT: 2745 Crossed! TEMA 9 & MACD Bullish Crossover Explained',
     category: 'NEPSE Analysis',
     date: 'May 28, 2026',
-    duration: '14:20',
-    videoUrl: 'https://www.youtube.com/embed/dQw4w9WgXcQ', // Placeholder embed link
+    duration: '12:45',
+    videoUrl: 'https://www.youtube.com/embed/bfENsVP77VQ',
     thumbnail: 'https://images.unsplash.com/photo-1611974789855-9c2a0a7236a3?auto=format&fit=crop&q=80&w=800',
-    desc: 'An in-depth review of the Nepal Stock Exchange (NEPSE) index charts. Learn how the formation of a "Tweezers Bottom" candlestick pattern signalizes a bullish reversal and what steps retail investors should consider next.'
+    desc: 'An in-depth technical analysis of the Nepal Stock Exchange (NEPSE) index breaking out past the 2745 level. Learn about TEMA 9 and MACD bullish crossover indicators and how to trade them.'
   },
   {
     id: 'vid-1',
-    title: 'Understanding Double Bottom Patterns in NEPSE',
-    category: 'Technical Indicators',
+    title: 'NEPSE Volume Crash: Why Did a "Buyers Strike" Happen?',
+    category: 'Market Analysis',
     date: 'May 24, 2026',
-    duration: '11:15',
-    videoUrl: 'https://www.youtube.com/embed/dQw4w9WgXcQ',
+    duration: '25:52',
+    videoUrl: 'https://www.youtube.com/embed/ifOu7F38k9k',
     thumbnail: 'https://images.unsplash.com/photo-1590283603385-17ffb3a7f29f?auto=format&fit=crop&q=80&w=400',
-    desc: 'How to spot double bottom chart formations and utilize volume confirmation to identify entry points on the Nepal stock market.'
+    desc: 'Analyzing the massive 40% drop in trading volume on the Nepal Stock Exchange (NEPSE). Understanding why buyers are staying on the sidelines and what it means for trend direction.'
   },
   {
     id: 'vid-2',
-    title: '5 Practical Personal Finance Tips for Beginners',
-    category: 'Personal Finance',
+    title: 'Top 5 Best Hydropower Stocks in NEPSE (Multibagger Potential)',
+    category: 'Stock Picks',
     date: 'May 15, 2026',
-    duration: '8:45',
-    videoUrl: 'https://www.youtube.com/embed/dQw4w9WgXcQ',
+    duration: '11:15',
+    videoUrl: 'https://www.youtube.com/embed/vuj_GcsHvoo',
     thumbnail: 'https://images.unsplash.com/photo-1579621970563-ebec7560ff3e?auto=format&fit=crop&q=80&w=400',
-    desc: 'A simple, non-jargon personal finance guide for high school graduates and young professionals. Starting emergency savings, understanding debts, and setting budgets.'
+    desc: 'A detailed study of the hydropower sector in Nepal. Evaluating the top 5 hydropower stocks with strong fundamentals and potential to deliver multibagger returns.'
   },
   {
     id: 'vid-3',
-    title: 'Budgeting Secrets: How to Stick to the 50/30/20 Rule',
-    category: 'Budgeting Tips',
+    title: 'The Dark Side of SIP in Nepal: Detailed Analysis',
+    category: 'Personal Finance',
     date: 'May 02, 2026',
-    duration: '10:30',
-    videoUrl: 'https://www.youtube.com/embed/dQw4w9WgXcQ',
+    duration: '18:30',
+    videoUrl: 'https://www.youtube.com/embed/INiRLCG1fM8',
     thumbnail: 'https://images.unsplash.com/photo-1554224155-8d04cb21cd6c?auto=format&fit=crop&q=80&w=400',
-    desc: 'Step-by-step walkthrough of creating your monthly spending spreadsheet and avoiding common friction points that make budgets fail.'
+    desc: 'Is Systematic Investment Plan (SIP) always safe? Examining the hidden risks, charges, and long-term realities of investing in SIP mutual funds in Nepal.'
   },
   {
     id: 'vid-4',
-    title: 'Common Mistakes in Trading Stocks: Managing Risk',
-    category: 'NEPSE Analysis',
+    title: 'Volume Analysis: The Correct Way to Read & Understand the Market',
+    category: 'Technical Indicators',
     date: 'Apr 28, 2026',
     duration: '15:10',
-    videoUrl: 'https://www.youtube.com/embed/dQw4w9WgXcQ',
+    videoUrl: 'https://www.youtube.com/embed/rDd5zNQ4d-Y',
     thumbnail: 'https://images.unsplash.com/photo-1598257006458-087169a1f08d?auto=format&fit=crop&q=80&w=400',
-    desc: 'Why over-leveraging and chasing speculative stocks ruins portfolios. Understanding the math of position sizing and stop-loss placements.'
+    desc: 'Volume precedes price. Learn how to combine volume indicators with price action to detect institutional buying (Smart Money) and avoid retail traps.'
   },
   {
     id: 'vid-5',
-    title: 'Mutual Funds vs. Direct Stocks in Nepal',
-    category: 'Personal Finance',
+    title: 'The Ultimate Guide to Swing Trading for Beginners 2026',
+    category: 'Trading Strategy',
     date: 'Apr 12, 2026',
     duration: '12:00',
-    videoUrl: 'https://www.youtube.com/embed/dQw4w9WgXcQ',
+    videoUrl: 'https://www.youtube.com/embed/UWKNLR4jOI0',
     thumbnail: 'https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?auto=format&fit=crop&q=80&w=400',
-    desc: 'Comparing the security and returns of SIP mutual funds with purchasing individual stocks. Find out which fits your risk tolerance.'
+    desc: 'Step-by-step swing trading course. Learn how to identify support/resistance levels, trend breakouts, and plan your risk-reward ratio effectively.'
   }
 ];
 
