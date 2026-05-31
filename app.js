@@ -15,10 +15,23 @@ document.addEventListener('DOMContentLoaded', () => {
 function initRouter() {
   const navLinks = document.querySelectorAll('[data-target]');
   const views = document.querySelectorAll('.section-view');
+  const mainNav = document.querySelector('nav');
+  const mobileToggle = document.getElementById('mobile-menu-toggle');
+
+  if (mobileToggle && mainNav) {
+    mobileToggle.addEventListener('click', () => {
+      mainNav.classList.toggle('active');
+    });
+  }
 
   function navigateTo(targetId) {
     // Scroll to top
     window.scrollTo({ top: 0, behavior: 'smooth' });
+
+    // Close mobile menu dropdown
+    if (mainNav) {
+      mainNav.classList.remove('active');
+    }
 
     // Toggle active link
     navLinks.forEach(link => {
@@ -53,6 +66,9 @@ function initRouter() {
       // triggers initial news rendering
     } else if (targetId === 'charts') {
       initTerminalChart();
+      if (termChartInst) {
+        setTimeout(resizeTerminalCharts, 50);
+      }
     }
   }
 
