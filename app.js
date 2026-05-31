@@ -24,6 +24,8 @@ function initRouter() {
     });
   }
 
+  const validSections = ['home', 'charts', 'budgeting', 'saving', 'investing', 'debt', 'education', 'news', 'videos'];
+
   function navigateTo(targetId) {
     // Scroll to top
     window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -72,26 +74,18 @@ function initRouter() {
     }
   }
 
-  navLinks.forEach(link => {
-    link.addEventListener('click', (e) => {
-      e.preventDefault();
-      const targetId = link.getAttribute('data-target');
-      navigateTo(targetId);
-    });
-  });
-
-  // Intercept other internal CTA links
-  document.body.addEventListener('click', (e) => {
-    const cta = e.target.closest('[data-go-to]');
-    if (cta) {
-      e.preventDefault();
-      const targetId = cta.getAttribute('data-go-to');
-      navigateTo(targetId);
+  function handleRouting() {
+    let hash = window.location.hash.substring(1);
+    if (!hash || !validSections.includes(hash)) {
+      hash = 'home';
     }
-  });
+    navigateTo(hash);
+  }
 
-  // Set default home active
-  navigateTo('home');
+  window.addEventListener('hashchange', handleRouting);
+
+  // Initial routing check
+  handleRouting();
 }
 
 // ==========================================
