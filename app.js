@@ -51,6 +51,8 @@ function initRouter() {
       // triggers initial category rendering if needed
     } else if (targetId === 'news') {
       // triggers initial news rendering
+    } else if (targetId === 'charts') {
+      initTerminalChart();
     }
   }
 
@@ -1745,3 +1747,885 @@ function initNepseChart() {
     macdChart.resize(w, 55);
   });
 }
+
+// ============================================================================
+// ADVANCED CHARTING TERMINAL & AI COPILOT CONTROLLER
+// ============================================================================
+
+// Stock Metadata & AI Signals Database
+const STOCK_METADATA = {
+  NEPSE: { name: 'Nepal Stock Exchange Index', type: 'Index', last: 2745.32, open: 2706.65, high: 2755.00, low: 2698.50, change: 38.67, pct: 1.43, base: 2150, entry: 2745, target: 2850, sl: 2680, summary: 'Strong bullish continuation breakout. Heavy volume cluster at 2700 supports price structure.' },
+  NICA: { name: 'NIC Asia Bank Limited', type: 'Banking', last: 542.80, open: 531.10, high: 548.00, low: 528.00, change: 11.70, pct: 2.20, base: 490, entry: 542, target: 610, sl: 512, summary: 'Bullish Hammer candlestick detected on daily support trendline. RSI indicating oversold reversal.' },
+  HIDCL: { name: 'Hydroelectricity Investment & Dev. Co.', type: 'Hydro', last: 192.50, open: 188.20, high: 195.00, low: 186.50, change: 4.30, pct: 2.28, base: 145, entry: 192, target: 235, sl: 178, summary: 'Ascending triangle breakout. Trading volume increased by 140% during the current session.' },
+  UPPER: { name: 'Upper Tamakoshi Hydropower Ltd.', type: 'Hydro', last: 268.30, open: 262.50, high: 271.00, low: 260.00, change: 5.80, pct: 2.21, base: 210, entry: 268, target: 315, sl: 250, summary: 'Consolidating near 200-EMA. Bullish divergence on MACD suggests an upcoming breakout rally.' },
+  SHL: { name: 'Soaltee Hotel Limited', type: 'Hotel', last: 348.60, open: 340.20, high: 352.00, low: 338.00, change: 8.40, pct: 2.47, base: 280, entry: 348, target: 395, sl: 325, summary: 'Strong demand zone holding at 330. Cup and handle pattern forming on weekly chart.' },
+  NTC: { name: 'Nepal Telecom', type: 'Telecom', last: 820.00, open: 805.00, high: 828.00, low: 801.00, change: 15.00, pct: 1.86, base: 740, entry: 820, target: 910, sl: 785, summary: 'Double bottom reversal patterns confirmed with high volume. Institutional buying detected.' },
+  HDL: { name: 'Himalayan Distillery Limited', type: 'Manufacturing', last: 1850.00, open: 1812.00, high: 1865.00, low: 1802.00, change: 38.00, pct: 2.10, base: 1600, entry: 1850, target: 2100, sl: 1740, summary: 'Bullish engulfing candle breakout past resistance cluster. TEMA 9 & 21 bullish crossover.' }
+};
+
+// Global Terminal State Variables
+let termChartInst = null;
+let termRsiInst = null;
+let termMacdInst = null;
+let termCandleSeries = null;
+let termVolumeSeries = null;
+let termSmaSeries = null;
+let termEmaSeries = null;
+let termBbUpper = null;
+let termBbMiddle = null;
+let termBbLower = null;
+let currentSymbol = 'NEPSE';
+let currentTermTf = '1D';
+
+// Drawing tools state
+let drawingMode = 'cursor'; // cursor, trendline, horizontal, fibonacci, ai-zone, text
+let isDrawing = false;
+let drawStart = { x: 0, y: 0 };
+let drawCurrent = { x: 0, y: 0 };
+let drawingsList = []; // stores all drawn shapes
+let activeDrawingsColor = '#00c076'; // neon green default
+
+// Initializer function for the Advanced Trading Terminal
+function initTerminalChart() {
+  const mainContainer = document.getElementById('terminal-main-chart');
+  const rsiContainer = document.getElementById('terminal-rsi-chart');
+  const macdContainer = document.getElementById('terminal-macd-chart');
+  
+  if (!mainContainer || !rsiContainer || !macdContainer || termChartInst) return;
+
+  // Initialize Toolbar Dropdown controls
+  const searchInput = document.getElementById('terminal-symbol-search');
+  const dropdown = document.getElementById('symbol-dropdown');
+  
+  if (searchInput && dropdown) {
+    searchInput.addEventListener('click', (e) => {
+      e.stopPropagation();
+      dropdown.classList.add('active');
+    });
+    
+    document.addEventListener('click', () => {
+      dropdown.classList.remove('active');
+    });
+    
+    dropdown.querySelectorAll('.symbol-option').forEach(opt => {
+      opt.addEventListener('click', () => {
+        const sym = opt.getAttribute('data-sym');
+        searchInput.value = sym;
+        switchTerminalSymbol(sym);
+        dropdown.classList.remove('active');
+      });
+    });
+    
+    searchInput.addEventListener('input', (e) => {
+      const q = e.target.value.toUpperCase();
+      dropdown.querySelectorAll('.symbol-option').forEach(opt => {
+        const sym = opt.getAttribute('data-sym');
+        const name = opt.getAttribute('data-name').toUpperCase();
+        if (sym.includes(q) || name.includes(q)) {
+          opt.style.display = 'block';
+        } else {
+          opt.style.display = 'none';
+        }
+      });
+      dropdown.classList.add('active');
+    });
+  }
+
+  // Timeframe Buttons Click Listeners
+  const tfButtons = document.querySelectorAll('.term-tf-btn');
+  tfButtons.forEach(btn => {
+    btn.addEventListener('click', () => {
+      tfButtons.forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      currentTermTf = btn.getAttribute('data-tf');
+      loadSymbolData(currentSymbol);
+    });
+  });
+
+  // Toggles for Indicators
+  const indButtons = document.querySelectorAll('.term-ind-btn');
+  indButtons.forEach(btn => {
+    btn.addEventListener('click', () => {
+      btn.classList.toggle('active');
+      const ind = btn.getAttribute('data-ind');
+      const isActive = btn.classList.contains('active');
+      
+      if (ind === 'sma') termSmaSeries.applyOptions({ visible: isActive });
+      else if (ind === 'ema') termEmaSeries.applyOptions({ visible: isActive });
+      else if (ind === 'bb') {
+        termBbUpper.applyOptions({ visible: isActive });
+        termBbMiddle.applyOptions({ visible: isActive });
+        termBbLower.applyOptions({ visible: isActive });
+      }
+      else if (ind === 'vol-profile' || ind === 'ai-signals' || ind === 'order-blocks') {
+        redrawDrawingCanvas(); // triggers re-render of canvas overlays
+      }
+    });
+  });
+
+  // Drawing Tools Buttons Click Listeners
+  const toolButtons = document.querySelectorAll('.tool-btn');
+  toolButtons.forEach(btn => {
+    btn.addEventListener('click', () => {
+      toolButtons.forEach(b => b.classList.remove('active'));
+      const tool = btn.getAttribute('data-tool');
+      if (tool) {
+        btn.classList.add('active');
+        drawingMode = tool;
+      }
+    });
+  });
+
+  const clearBtn = document.getElementById('tool-clear');
+  if (clearBtn) {
+    clearBtn.addEventListener('click', () => {
+      drawingsList = [];
+      redrawDrawingCanvas();
+      alert('Drawings cleared!');
+    });
+  }
+
+  // Sidebar Toggles
+  const btnToggleAi = document.getElementById('btn-toggle-ai');
+  const aiPanel = document.getElementById('terminal-ai-panel');
+  if (btnToggleAi && aiPanel) {
+    btnToggleAi.addEventListener('click', () => {
+      btnToggleAi.classList.toggle('inactive');
+      aiPanel.classList.toggle('collapsed');
+      
+      // Trigger charts resizing
+      setTimeout(() => {
+        resizeTerminalCharts();
+      }, 350);
+    });
+  }
+
+  // Fullscreen view toggle
+  const btnFullscreen = document.getElementById('btn-fullscreen');
+  const termContainer = document.querySelector('.terminal-container');
+  if (btnFullscreen && termContainer) {
+    btnFullscreen.addEventListener('click', () => {
+      termContainer.classList.toggle('fullscreen');
+      
+      // Toggle button icon representation or size
+      setTimeout(() => {
+        resizeTerminalCharts();
+      }, 100);
+    });
+  }
+
+  // AI Chat sends logic
+  const chatInput = document.getElementById('ai-chat-input');
+  const chatSend = document.getElementById('ai-chat-send');
+  if (chatInput && chatSend) {
+    chatSend.addEventListener('click', sendAiChatMessage);
+    chatInput.addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') sendAiChatMessage();
+    });
+  }
+
+  // Create main Lightweight charts in dark mode
+  termChartInst = LightweightCharts.createChart(mainContainer, {
+    layout: {
+      background: { type: 'solid', color: '#131722' },
+      textColor: '#b2b5be',
+      fontSize: 10,
+    },
+    grid: {
+      vertLines: { color: '#202533' },
+      horzLines: { color: '#202533' },
+    },
+    timeScale: {
+      borderColor: '#2a2e39',
+      timeVisible: true,
+      secondsVisible: false,
+    },
+    rightPriceScale: {
+      borderColor: '#2a2e39',
+    },
+    crosshair: {
+      mode: LightweightCharts.CrosshairMode.Normal,
+      vertLine: { color: '#787b86', width: 1, style: LightweightCharts.LineStyle.Dashed },
+      horzLine: { color: '#787b86', width: 1, style: LightweightCharts.LineStyle.Dashed },
+    }
+  });
+
+  termCandleSeries = termChartInst.addCandlestickSeries({
+    upColor: '#00c076',
+    downColor: '#ff335c',
+    borderUpColor: '#00c076',
+    borderDownColor: '#ff335c',
+    wickUpColor: '#00c076',
+    wickDownColor: '#ff335c',
+  });
+
+  termVolumeSeries = termChartInst.addHistogramSeries({
+    priceFormat: { type: 'volume' },
+    priceScaleId: 'volume',
+  });
+  termChartInst.priceScale('volume').applyOptions({
+    scaleMargins: { top: 0.82, bottom: 0 },
+  });
+
+  termSmaSeries = termChartInst.addLineSeries({ color: '#2962ff', lineWidth: 1.5 });
+  termEmaSeries = termChartInst.addLineSeries({ color: '#ff6d00', lineWidth: 1.5 });
+  
+  termBbUpper = termChartInst.addLineSeries({ color: 'rgba(201, 162, 39, 0.45)', lineWidth: 1, lineStyle: LightweightCharts.LineStyle.Dotted });
+  termBbMiddle = termChartInst.addLineSeries({ color: 'rgba(201, 162, 39, 0.3)', lineWidth: 1, lineStyle: LightweightCharts.LineStyle.Dashed });
+  termBbLower = termChartInst.addLineSeries({ color: 'rgba(201, 162, 39, 0.45)', lineWidth: 1, lineStyle: LightweightCharts.LineStyle.Dotted });
+
+  // Create RSI panel
+  termRsiInst = LightweightCharts.createChart(rsiContainer, {
+    layout: {
+      background: { type: 'solid', color: '#131722' },
+      textColor: '#787b86',
+      fontSize: 9,
+    },
+    grid: {
+      vertLines: { color: '#202533' },
+      horzLines: { color: '#202533' },
+    },
+    timeScale: {
+      borderColor: '#2a2e39',
+      visible: false,
+    },
+    rightPriceScale: {
+      borderColor: '#2a2e39',
+    },
+    crosshair: {
+      mode: LightweightCharts.CrosshairMode.Normal,
+    }
+  });
+
+  // Create MACD panel
+  termMacdInst = LightweightCharts.createChart(macdContainer, {
+    layout: {
+      background: { type: 'solid', color: '#131722' },
+      textColor: '#787b86',
+      fontSize: 9,
+    },
+    grid: {
+      vertLines: { color: '#202533' },
+      horzLines: { color: '#202533' },
+    },
+    timeScale: {
+      borderColor: '#2a2e39',
+      visible: false,
+    },
+    rightPriceScale: {
+      borderColor: '#2a2e39',
+    },
+    crosshair: {
+      mode: LightweightCharts.CrosshairMode.Normal,
+    }
+  });
+
+  // Sync visible timeframe scales
+  termChartInst.timeScale().subscribeVisibleLogicalRangeChange(range => {
+    termRsiInst.timeScale().setVisibleLogicalRange(range);
+    termMacdInst.timeScale().setVisibleLogicalRange(range);
+    // redraw drawings overlay canvas since view shifts
+    redrawDrawingCanvas();
+  });
+  
+  termRsiInst.timeScale().subscribeVisibleLogicalRangeChange(range => {
+    termChartInst.timeScale().setVisibleLogicalRange(range);
+    termMacdInst.timeScale().setVisibleLogicalRange(range);
+  });
+  
+  termMacdInst.timeScale().subscribeVisibleLogicalRangeChange(range => {
+    termChartInst.timeScale().setVisibleLogicalRange(range);
+    termRsiInst.timeScale().setVisibleLogicalRange(range);
+  });
+
+  // Crosshair movements for legends syncing
+  termChartInst.subscribeCrosshairMove(param => {
+    syncTerminalLegends(param);
+  });
+
+  // Initialize Drawing Canvas Events
+  initDrawingOverlayCanvas();
+
+  // Load first symbol (NEPSE)
+  loadSymbolData('NEPSE');
+}
+
+// Resizes all charts to fit their containers
+function resizeTerminalCharts() {
+  const mainContainer = document.getElementById('terminal-main-chart');
+  const rsiContainer = document.getElementById('terminal-rsi-chart');
+  const macdContainer = document.getElementById('terminal-macd-chart');
+  
+  if (!mainContainer || !termChartInst) return;
+
+  const w = mainContainer.clientWidth;
+  const mainH = mainContainer.clientHeight || 280;
+  
+  termChartInst.resize(w, mainH);
+  termRsiInst.resize(w, 60);
+  termMacdInst.resize(w, 60);
+
+  // Resize drawing canvas overlay
+  const drawCanvas = document.getElementById('drawing-canvas-overlay');
+  if (drawCanvas) {
+    drawCanvas.width = mainContainer.clientWidth;
+    drawCanvas.height = mainContainer.clientHeight;
+    redrawDrawingCanvas();
+  }
+}
+
+// Triggers active symbol switches
+function switchTerminalSymbol(symbol) {
+  if (!STOCK_METADATA[symbol]) return;
+  currentSymbol = symbol;
+  
+  // Update header text titles
+  document.getElementById('term-symbol-display').textContent = symbol;
+  document.getElementById('term-fullname-display').textContent = STOCK_METADATA[symbol].name;
+  
+  // Load new stock data
+  loadSymbolData(symbol);
+  
+  // Update AI recommendation panel
+  const meta = STOCK_METADATA[symbol];
+  document.getElementById('ai-reco-symbol').textContent = `${symbol} (${meta.type})`;
+  document.getElementById('ai-reco-summary').textContent = meta.summary;
+  document.getElementById('ai-entry').textContent = meta.last.toLocaleString('en-US');
+  document.getElementById('ai-target').textContent = meta.target.toLocaleString('en-US');
+  document.getElementById('ai-sl').textContent = meta.sl.toLocaleString('en-US');
+  
+  // Reset drawing canvas coordinates
+  drawingsList = [];
+  redrawDrawingCanvas();
+}
+
+// Generate stock data and bind to chart series
+function loadSymbolData(symbol) {
+  if (!termChartInst) return;
+
+  const meta = STOCK_METADATA[symbol];
+  const dailyData = [];
+  const baseDate = new Date();
+  baseDate.setDate(baseDate.getDate() - 365); // 1 year ago
+
+  // Determine pricing walk density based on timeframe (simulated)
+  let stepsCount = 250;
+  let currentPrice = meta.base;
+
+  for (let i = 0; i < stepsCount; i++) {
+    baseDate.setDate(baseDate.getDate() + 1);
+    while (baseDate.getDay() === 5 || baseDate.getDay() === 6) { // Sunday-Thursday trading weeks
+      baseDate.setDate(baseDate.getDate() + 1);
+    }
+    const timeStr = baseDate.toISOString().split('T')[0];
+
+    let trend = 0;
+    if (i < 80) trend = 1.6;
+    else if (i < 160) trend = -0.5;
+    else trend = 3.2;
+
+    const volatility = symbol === 'HDL' ? 45 : (symbol.includes('NIC') ? 8 : 4);
+    const change = (Math.random() - 0.43) * volatility + trend;
+    const open = Math.round((currentPrice) * 100) / 100;
+    
+    let close = Math.round((currentPrice + change) * 100) / 100;
+    if (i === stepsCount - 1) {
+      close = meta.last;
+    }
+    
+    let high = Math.round((Math.max(open, close) + Math.random() * (volatility * 0.4)) * 100) / 100;
+    let low = Math.round((Math.min(open, close) - Math.random() * (volatility * 0.4)) * 100) / 100;
+
+    if (i === stepsCount - 1) {
+      dailyData.push({
+        time: timeStr,
+        open: meta.open,
+        high: meta.high,
+        low: meta.low,
+        close: meta.last,
+        volume: Math.round(5000000 + Math.random() * 6000000)
+      });
+    } else {
+      dailyData.push({
+        time: timeStr,
+        open: open,
+        high: high,
+        low: low,
+        close: close,
+        volume: Math.round(1000000 + Math.random() * 4000000)
+      });
+      currentPrice = close;
+    }
+  }
+
+  // Precalculate technical indicators
+  const smaData = calculateSMA(dailyData, 20);
+  const emaData = calculateEMA(dailyData, 9);
+  const bbData = calculateBollingerBands(dailyData, 20, 2);
+  const rsiData = calculateRSI(dailyData, 14);
+  const macdData = calculateMACD(dailyData);
+
+  // Bind to main chart candlestick series
+  termCandleSeries.setData(dailyData);
+  
+  // Bind Volume histogram series
+  const volumeData = dailyData.map(d => ({
+    time: d.time,
+    value: d.volume,
+    color: d.close >= d.open ? 'rgba(0, 192, 118, 0.15)' : 'rgba(255, 51, 92, 0.15)'
+  }));
+  termVolumeSeries.setData(volumeData);
+
+  // Bind Line series indicators
+  termSmaSeries.setData(smaData);
+  termEmaSeries.setData(emaData);
+  
+  termBbUpper.setData(bbData.upper);
+  termBbMiddle.setData(bbData.middle);
+  termBbLower.setData(bbData.lower);
+
+  // Render sub-panel series
+  // RSI
+  termRsiInst.removeSeries(termRsiInst.seriesList ? termRsiInst.seriesList[0] : null); // Clear prev
+  const termRsiSeries = termRsiInst.addLineSeries({ color: '#7e57c2', lineWidth: 1.5 });
+  termRsiSeries.setData(rsiData);
+  
+  // Render RSI bounds
+  const rsi30 = termRsiInst.addLineSeries({ color: 'rgba(255, 51, 92, 0.2)', lineWidth: 1, lineStyle: LightweightCharts.LineStyle.Dashed });
+  const rsi70 = termRsiInst.addLineSeries({ color: 'rgba(0, 192, 118, 0.2)', lineWidth: 1, lineStyle: LightweightCharts.LineStyle.Dashed });
+  const refTimes = dailyData.map(d => d.time);
+  rsi30.setData(refTimes.map(t => ({ time: t, value: 30 })));
+  rsi70.setData(refTimes.map(t => ({ time: t, value: 70 })));
+
+  // MACD
+  termMacdInst.seriesList = termMacdInst.seriesList || [];
+  termMacdInst.seriesList.forEach(s => termMacdInst.removeSeries(s));
+  
+  const macdLine = termMacdInst.addLineSeries({ color: '#2563eb', lineWidth: 1.5 });
+  const macdSignal = termMacdInst.addLineSeries({ color: '#ea580c', lineWidth: 1.5 });
+  const macdHist = termMacdInst.addHistogramSeries({});
+  
+  macdLine.setData(macdData.macdLine);
+  macdSignal.setData(macdData.signalLine);
+  const histData = macdData.histogram.map(d => ({
+    time: d.time,
+    value: d.value,
+    color: d.value >= 0 ? 'rgba(0, 192, 118, 0.35)' : 'rgba(255, 51, 92, 0.35)'
+  }));
+  macdHist.setData(histData);
+
+  termMacdInst.seriesList = [macdLine, macdSignal, macdHist];
+
+  // Set indicators active toggles states
+  const activeInds = document.querySelectorAll('.term-ind-btn.active');
+  const indKeys = Array.from(activeInds).map(b => b.getAttribute('data-ind'));
+  
+  termSmaSeries.applyOptions({ visible: indKeys.includes('sma') });
+  termEmaSeries.applyOptions({ visible: isActiveIndicator('ema') });
+  termBbUpper.applyOptions({ visible: isActiveIndicator('bb') });
+  termBbMiddle.applyOptions({ visible: isActiveIndicator('bb') });
+  termBbLower.applyOptions({ visible: isActiveIndicator('bb') });
+
+  // 1D/zoom constraints fitting
+  termChartInst.timeScale().fitContent();
+
+  // Set AI markers/buy sell indicators directly on the chart
+  if (isActiveIndicator('ai-signals')) {
+    const markers = [];
+    // Place 4-5 mock AI prediction labels along the historical days
+    for (let idx = 40; idx < stepsCount; idx += 55) {
+      const d = dailyData[idx];
+      const isBuy = d.close >= d.open;
+      markers.push({
+        time: d.time,
+        position: isBuy ? 'belowBar' : 'aboveBar',
+        color: isBuy ? '#00c076' : '#ff335c',
+        shape: isBuy ? 'arrowUp' : 'arrowDown',
+        text: isBuy ? 'AI BUY' : 'AI SELL',
+        size: 1.2
+      });
+    }
+    termCandleSeries.setMarkers(markers);
+  } else {
+    termCandleSeries.setMarkers([]);
+  }
+
+  // Update legends text to latest value on load
+  const latestVal = dailyData[dailyData.length - 1];
+  updateTerminalOHLCLegends(latestVal, meta.change, meta.pct);
+  
+  const latestRsi = rsiData[rsiData.length - 1].value.toFixed(2);
+  document.getElementById('term-rsi-val').textContent = latestRsi;
+  
+  const latestMacd = macdData.macdLine[macdData.macdLine.length - 1].value.toFixed(2);
+  const latestSignal = macdData.signalLine[macdData.signalLine.length - 1].value.toFixed(2);
+  document.getElementById('term-macd-val').innerHTML = `<span style="color:#2563eb">MACD: ${latestMacd}</span> <span style="color:#ea580c; margin-left:6px;">Signal: ${latestSignal}</span>`;
+
+  // Trigger drawings resize and overlay redraw
+  setTimeout(() => {
+    resizeTerminalCharts();
+  }, 100);
+}
+
+function isActiveIndicator(ind) {
+  const btn = document.querySelector(`.term-ind-btn[data-ind="${ind}"]`);
+  return btn ? btn.classList.contains('active') : false;
+}
+
+// Updates price header metrics
+function updateTerminalOHLCLegends(candle, change, pct) {
+  document.getElementById('term-open').textContent = candle.open.toFixed(2);
+  document.getElementById('term-high').textContent = candle.high.toFixed(2);
+  document.getElementById('term-low').textContent = candle.low.toFixed(2);
+  document.getElementById('term-close').textContent = candle.close.toFixed(2);
+  
+  const priceDisplay = document.getElementById('term-current-price');
+  const changeDisplay = document.getElementById('term-price-change');
+  
+  if (priceDisplay && changeDisplay) {
+    priceDisplay.textContent = candle.close.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    changeDisplay.innerHTML = `
+      <span class="${change >= 0 ? 'positive' : 'negative'}">
+        ${change >= 0 ? '+' : ''}${change.toFixed(2)} (${change >= 0 ? '+' : ''}${pct.toFixed(2)}%)
+      </span>
+    `;
+  }
+}
+
+// Synchronizes the technical legends on crosshair hover
+function syncTerminalLegends(param) {
+  if (!param.time) {
+    // Reset to last candle values
+    const meta = STOCK_METADATA[currentSymbol];
+    document.getElementById('term-current-price').textContent = meta.last.toLocaleString('en-US');
+    document.getElementById('term-price-change').innerHTML = `
+      <span class="${meta.change >= 0 ? 'positive' : 'negative'}">
+        ${meta.change >= 0 ? '+' : ''}${meta.change.toFixed(2)} (${meta.change >= 0 ? '+' : ''}${meta.pct.toFixed(2)}%)
+      </span>
+    `;
+    return;
+  }
+
+  const candle = param.seriesData.get(termCandleSeries);
+  if (candle) {
+    const change = candle.close - candle.open;
+    const pct = (change / candle.open) * 100;
+    updateTerminalOHLCLegends(candle, change, pct);
+  }
+}
+
+// Sets up the transparent overlay drawing canvas
+function initDrawingOverlayCanvas() {
+  const canvas = document.getElementById('drawing-canvas-overlay');
+  const container = document.getElementById('terminal-canvas-container');
+  
+  if (!canvas || !container) return;
+
+  canvas.width = container.clientWidth;
+  canvas.height = container.clientHeight;
+
+  // Listen to drawing trigger coordinate points
+  canvas.addEventListener('mousedown', (e) => {
+    if (drawingMode === 'cursor') return;
+    
+    isDrawing = true;
+    const rect = canvas.getBoundingClientRect();
+    drawStart = {
+      x: e.clientX - rect.left,
+      y: e.clientY - rect.top
+    };
+    drawCurrent = { ...drawStart };
+  });
+
+  canvas.addEventListener('mousemove', (e) => {
+    if (!isDrawing) return;
+    
+    const rect = canvas.getBoundingClientRect();
+    drawCurrent = {
+      x: e.clientX - rect.left,
+      y: e.clientY - rect.top
+    };
+    
+    // Draw current action in real-time
+    redrawDrawingCanvas();
+    drawTemporaryShape();
+  });
+
+  canvas.addEventListener('mouseup', (e) => {
+    if (!isDrawing) return;
+    isDrawing = false;
+    
+    const rect = canvas.getBoundingClientRect();
+    drawCurrent = {
+      x: e.clientX - rect.left,
+      y: e.clientY - rect.top
+    };
+
+    // Save drawn shape to drawingsList
+    if (drawingMode !== 'cursor') {
+      if (drawingMode === 'text') {
+        const textStr = prompt('Enter note text label:');
+        if (textStr) {
+          drawingsList.push({
+            type: 'text',
+            x: drawStart.x,
+            y: drawStart.y,
+            text: textStr
+          });
+        }
+      } else {
+        drawingsList.push({
+          type: drawingMode,
+          x1: drawStart.x,
+          y1: drawStart.y,
+          x2: drawCurrent.x,
+          y2: drawCurrent.y
+        });
+      }
+      
+      // Select cursor mode again after a shape finishes drawing
+      drawingMode = 'cursor';
+      const cursorBtn = document.querySelector('.tool-btn[data-tool="cursor"]');
+      if (cursorBtn) {
+        document.querySelectorAll('.tool-btn').forEach(b => b.classList.remove('active'));
+        cursorBtn.classList.add('active');
+      }
+    }
+    
+    redrawDrawingCanvas();
+  });
+}
+
+// Clears and draws all custom shapes/indicators onto overlay canvas
+function redrawDrawingCanvas() {
+  const canvas = document.getElementById('drawing-canvas-overlay');
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+  // Render Horizontal Volume Profile if active
+  if (isActiveIndicator('vol-profile')) {
+    drawHorizontalVolumeProfile(ctx, canvas);
+  }
+
+  // Render ICT Order Blocks if active
+  if (isActiveIndicator('order-blocks')) {
+    drawIctOrderBlocks(ctx, canvas);
+  }
+
+  // Render all saved drawings
+  drawingsList.forEach(shape => {
+    drawShape(ctx, shape);
+  });
+}
+
+// Draws a temporary shape during mouse drag
+function drawTemporaryShape() {
+  const canvas = document.getElementById('drawing-canvas-overlay');
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+  
+  const tempShape = {
+    type: drawingMode,
+    x1: drawStart.x,
+    y1: drawStart.y,
+    x2: drawCurrent.x,
+    y2: drawCurrent.y
+  };
+  
+  ctx.save();
+  ctx.strokeStyle = 'rgba(0, 192, 118, 0.6)';
+  ctx.lineWidth = 2;
+  drawShape(ctx, tempShape);
+  ctx.restore();
+}
+
+// Core drawing helper for shapes
+function drawShape(ctx, shape) {
+  ctx.strokeStyle = activeDrawingsColor;
+  ctx.fillStyle = activeDrawingsColor;
+  ctx.lineWidth = 1.5;
+
+  if (shape.type === 'trendline') {
+    ctx.beginPath();
+    ctx.moveTo(shape.x1, shape.y1);
+    ctx.lineTo(shape.x2, shape.y2);
+    ctx.stroke();
+    // Start and end circles
+    ctx.beginPath();
+    ctx.arc(shape.x1, shape.y1, 3.5, 0, 2 * Math.PI);
+    ctx.arc(shape.x2, shape.y2, 3.5, 0, 2 * Math.PI);
+    ctx.fill();
+  } 
+  else if (shape.type === 'horizontal') {
+    ctx.beginPath();
+    ctx.moveTo(0, shape.y1);
+    ctx.lineTo(ctx.canvas.width, shape.y1);
+    ctx.stroke();
+    // Center point marker
+    ctx.beginPath();
+    ctx.arc(shape.x1, shape.y1, 3, 0, 2 * Math.PI);
+    ctx.fill();
+  } 
+  else if (shape.type === 'fibonacci') {
+    const h = shape.y2 - shape.y1;
+    const levels = [
+      { ratio: 0, label: '0.0% (1.000)' },
+      { ratio: 0.236, label: '23.6% (0.764)' },
+      { ratio: 0.382, label: '38.2% (0.618)' },
+      { ratio: 0.5, label: '50.0% (0.500)' },
+      { ratio: 0.618, label: '61.8% (0.382)' },
+      { ratio: 1, label: '100.0% (0.000)' }
+    ];
+    
+    levels.forEach(lvl => {
+      const y = shape.y1 + h * lvl.ratio;
+      ctx.strokeStyle = 'rgba(201, 162, 39, 0.55)'; // Gold tone
+      ctx.beginPath();
+      ctx.setLineDash([4, 4]);
+      ctx.moveTo(0, y);
+      ctx.lineTo(ctx.canvas.width, y);
+      ctx.stroke();
+      ctx.setLineDash([]);
+      
+      // Label text
+      ctx.fillStyle = '#c9a227';
+      ctx.font = '9px monospace';
+      ctx.fillText(lvl.label, 10, y - 4);
+    });
+  } 
+  else if (shape.type === 'ai-zone') {
+    ctx.fillStyle = 'rgba(0, 192, 118, 0.08)';
+    ctx.strokeStyle = 'rgba(0, 192, 118, 0.4)';
+    const w = shape.x2 - shape.x1;
+    const h = shape.y2 - shape.y1;
+    ctx.fillRect(shape.x1, shape.y1, w, h);
+    ctx.strokeRect(shape.x1, shape.y1, w, h);
+    
+    // AI Label
+    ctx.fillStyle = '#00c076';
+    ctx.font = '700 9px sans-serif';
+    ctx.fillText('AI S/R ZONE', Math.min(shape.x1, shape.x2) + 6, Math.min(shape.y1, shape.y2) + 12);
+  }
+  else if (shape.type === 'text') {
+    ctx.fillStyle = '#ffffff';
+    ctx.font = '11px var(--font-sans)';
+    ctx.fillText(shape.text, shape.x, shape.y);
+  }
+}
+
+// Renders horizontal Volume Profile on the left of chart area
+function drawHorizontalVolumeProfile(ctx, canvas) {
+  // Use prices between 2600 and 2760 for spacing
+  const binsCount = 14;
+  const barHeight = canvas.height / binsCount;
+  
+  ctx.save();
+  ctx.fillStyle = 'rgba(120, 123, 134, 0.1)';
+  ctx.strokeStyle = 'rgba(120, 123, 134, 0.18)';
+  ctx.lineWidth = 1;
+
+  for (let i = 0; i < binsCount; i++) {
+    // Generate simulated volume sizes (wider profile bars in the middle range)
+    let factor = Math.sin((i / binsCount) * Math.PI);
+    let barWidth = (canvas.width * 0.35) * factor + (Math.random() * 20);
+    
+    const y = i * barHeight;
+    ctx.fillRect(0, y + 2, barWidth, barHeight - 4);
+    ctx.strokeRect(0, y + 2, barWidth, barHeight - 4);
+
+    // Color point of control (POC) in red (middle bin)
+    if (i === Math.floor(binsCount * 0.45)) {
+      ctx.fillStyle = 'rgba(255, 51, 92, 0.2)';
+      ctx.strokeStyle = 'rgba(255, 51, 92, 0.4)';
+      ctx.fillRect(0, y + 2, barWidth + 15, barHeight - 4);
+      ctx.strokeRect(0, y + 2, barWidth + 15, barHeight - 4);
+      ctx.fillStyle = 'rgba(120, 123, 134, 0.1)';
+      ctx.strokeStyle = 'rgba(120, 123, 134, 0.18)';
+    }
+  }
+  ctx.restore();
+}
+
+// Draws Order Blocks zones on chart background
+function drawIctOrderBlocks(ctx, canvas) {
+  // Setup 2 order blocks ranges vertically
+  const blocks = [
+    { y: canvas.height * 0.22, h: 22, type: 'bearish', label: 'Bearish Order Block' },
+    { y: canvas.height * 0.65, h: 26, type: 'bullish', label: 'Bullish Order Block' }
+  ];
+
+  ctx.save();
+  blocks.forEach(b => {
+    ctx.fillStyle = b.type === 'bearish' ? 'rgba(255, 51, 92, 0.05)' : 'rgba(0, 192, 118, 0.05)';
+    ctx.strokeStyle = b.type === 'bearish' ? 'rgba(255, 51, 92, 0.25)' : 'rgba(0, 192, 118, 0.25)';
+    ctx.lineWidth = 1;
+    ctx.setLineDash([2, 4]);
+    
+    ctx.fillRect(0, b.y, canvas.width, b.h);
+    ctx.strokeRect(-2, b.y, canvas.width + 4, b.h);
+    
+    // Text tag
+    ctx.fillStyle = b.type === 'bearish' ? '#ff335c' : '#00c076';
+    ctx.font = '700 8px sans-serif';
+    ctx.fillText(b.label, canvas.width - 110, b.y + 14);
+  });
+  ctx.restore();
+}
+
+// Interactive chat logs sender & analysis answers generator
+function sendAiChatMessage() {
+  const input = document.getElementById('ai-chat-input');
+  const chatLog = document.getElementById('ai-chat-log-container');
+  
+  if (!input || !input.value.trim() || !chatLog) return;
+
+  const userQuery = input.value.trim();
+  input.value = '';
+
+  // Append user chat bubble
+  const userBubble = document.createElement('div');
+  userBubble.className = 'ai-msg user';
+  userBubble.innerHTML = `
+    <div class="msg-sender">You</div>
+    <div class="msg-content">${userQuery}</div>
+  `;
+  chatLog.appendChild(userBubble);
+  chatLog.scrollTop = chatLog.scrollHeight;
+
+  // Simulate AI Copilot analytical reply
+  setTimeout(() => {
+    const botBubble = document.createElement('div');
+    botBubble.className = 'ai-msg bot';
+    
+    let botReply = '';
+    const q = userQuery.toUpperCase();
+    
+    if (q.includes('NICA') || q.includes('NIC ASIA')) {
+      botReply = 'NIC Asia Bank (NICA) is showing a strong support base at 520. The current price of 542.80 is resting near the 50-day EMA, representing a low-risk buying opportunity. Target is 610, Stop Loss 512. Indicators show RSI at 42 (Oversold reversal).';
+    } 
+    else if (q.includes('HIDCL')) {
+      botReply = 'HIDCL is trending inside an ascending triangle. Breakout point is 195. Volume profile shows heavy accumulation at 188. AI recommends adding positions on breakout past 196 with targets near 235.';
+    } 
+    else if (q.includes('UPPER') || q.includes('TAMAKOSHI')) {
+      botReply = 'Upper Tamakoshi (UPPER) has formed a double bottom pattern near 260. RSI is turning positive from 35. EMA 9 is crossing above SMA 20, confirming short-term bullish momentum. Initial target is 315.';
+    } 
+    else if (q.includes('HYDRO') || q.includes('HYDROPOWER')) {
+      botReply = 'The Hydropower index is facing overhead resistance. However, stocks like **UPPER** and **HIDCL** show strong consolidation structures compared to speculative names. Accumulate quality hydro shares near support zones.';
+    }
+    else if (q.includes('TREND') || q.includes('MARKET') || q.includes('NEPSE')) {
+      botReply = `NEPSE index current structure is bullish. Having crossed 2,745 with high volume, the market is setting up a target of 2,850. Major support is located at 2,680. Volume profiles suggest POC (Point of Control) is currently shifting higher.`;
+    }
+    else {
+      botReply = `I am analyzing the technical configurations of ${currentSymbol}. Volume profile POC represents key support. Bollinger Bands are squeezing, suggesting a volatility breakout is imminent. Entry parameters: Entry: ${STOCK_METADATA[currentSymbol].entry}, Target: ${STOCK_METADATA[currentSymbol].target}, Stop Loss: ${STOCK_METADATA[currentSymbol].sl}.`;
+    }
+
+    botBubble.innerHTML = `
+      <div class="msg-sender">System Copilot</div>
+      <div class="msg-content">${botReply}</div>
+    `;
+    chatLog.appendChild(botBubble);
+    chatLog.scrollTop = chatLog.scrollHeight;
+  }, 750);
+}
+
