@@ -688,6 +688,11 @@ main {
   color: #ff0000;
 }
 
+.social-icon.linkedin {
+  background-color: #e8f4f9;
+  color: #0a66c2;
+}
+
 .social-card-content {
   flex: 1;
 }
