@@ -725,6 +725,8 @@ function openVideoModal(video) {
   title.textContent = video.title;
   desc.textContent = video.desc;
 
+  iframeWrapper.className = 'modal-iframe-wrapper has-video';
+
   // Let's create an actual YouTube iframe embed.
   // Use a neat embed template. If it's a real channel, standard embed will be used.
   iframeWrapper.innerHTML = `
@@ -751,6 +753,7 @@ function closeVideoModal() {
   // Remove iframe to halt video audio playback
   if (iframeWrapper) {
     iframeWrapper.innerHTML = '';
+    iframeWrapper.className = 'modal-iframe-wrapper';
   }
 }
 
@@ -1012,6 +1015,8 @@ function openBookModal(book) {
 
   if (!overlay || !banner) return;
 
+  banner.className = 'modal-iframe-wrapper has-banner';
+
   tag.textContent = book.category;
   title.textContent = book.title;
 
@@ -1225,6 +1230,8 @@ function openNewsModal(news) {
   const desc = document.getElementById('modal-video-desc');
 
   if (!overlay || !banner) return;
+
+  banner.className = 'modal-iframe-wrapper has-banner';
 
   tag.textContent = news.categoryText;
   title.textContent = news.title;
@@ -1445,24 +1452,26 @@ function initNepseChart() {
   // 3. Render Main Candlestick & Volume Chart
   const mainChart = LightweightCharts.createChart(mainContainer, {
     layout: {
-      background: { type: 'solid', color: '#ffffff' },
-      textColor: '#6b7280',
+      background: { type: 'solid', color: 'transparent' },
+      textColor: 'rgba(255, 255, 255, 0.65)',
       fontSize: 10,
     },
     grid: {
-      vertLines: { color: '#f3f4f6' },
-      horzLines: { color: '#f3f4f6' },
+      vertLines: { color: 'rgba(255, 255, 255, 0.05)' },
+      horzLines: { color: 'rgba(255, 255, 255, 0.05)' },
     },
     timeScale: {
-      borderColor: '#e5e7eb',
+      borderColor: 'rgba(255, 255, 255, 0.08)',
       timeVisible: false,
       secondsVisible: false,
     },
     rightPriceScale: {
-      borderColor: '#e5e7eb',
+      borderColor: 'rgba(255, 255, 255, 0.08)',
     },
     crosshair: {
       mode: LightweightCharts.CrosshairMode.Normal,
+      vertLine: { color: 'rgba(255, 255, 255, 0.25)', width: 1, style: LightweightCharts.LineStyle.Dashed },
+      horzLine: { color: 'rgba(255, 255, 255, 0.25)', width: 1, style: LightweightCharts.LineStyle.Dashed },
     }
   });
   
@@ -1519,20 +1528,20 @@ function initNepseChart() {
   // 4. Render RSI Sub-panel Chart
   const rsiChart = LightweightCharts.createChart(rsiContainer, {
     layout: {
-      background: { type: 'solid', color: '#ffffff' },
-      textColor: '#6b7280',
+      background: { type: 'solid', color: 'transparent' },
+      textColor: 'rgba(255, 255, 255, 0.65)',
       fontSize: 10,
     },
     grid: {
-      vertLines: { color: '#f3f4f6' },
-      horzLines: { color: '#f3f4f6' },
+      vertLines: { color: 'rgba(255, 255, 255, 0.05)' },
+      horzLines: { color: 'rgba(255, 255, 255, 0.05)' },
     },
     timeScale: {
-      borderColor: '#e5e7eb',
+      borderColor: 'rgba(255, 255, 255, 0.08)',
       visible: false,
     },
     rightPriceScale: {
-      borderColor: '#e5e7eb',
+      borderColor: 'rgba(255, 255, 255, 0.08)',
     },
     crosshair: {
       mode: LightweightCharts.CrosshairMode.Normal,
@@ -1558,20 +1567,20 @@ function initNepseChart() {
   // 5. Render MACD Sub-panel Chart
   const macdChart = LightweightCharts.createChart(macdContainer, {
     layout: {
-      background: { type: 'solid', color: '#ffffff' },
-      textColor: '#6b7280',
+      background: { type: 'solid', color: 'transparent' },
+      textColor: 'rgba(255, 255, 255, 0.65)',
       fontSize: 10,
     },
     grid: {
-      vertLines: { color: '#f3f4f6' },
-      horzLines: { color: '#f3f4f6' },
+      vertLines: { color: 'rgba(255, 255, 255, 0.05)' },
+      horzLines: { color: 'rgba(255, 255, 255, 0.05)' },
     },
     timeScale: {
-      borderColor: '#e5e7eb',
+      borderColor: 'rgba(255, 255, 255, 0.08)',
       visible: false,
     },
     rightPriceScale: {
-      borderColor: '#e5e7eb',
+      borderColor: 'rgba(255, 255, 255, 0.08)',
     },
     crosshair: {
       mode: LightweightCharts.CrosshairMode.Normal,
@@ -1785,6 +1794,19 @@ let drawCurrent = { x: 0, y: 0 };
 let drawingsList = []; // stores all drawn shapes
 let activeDrawingsColor = '#00c076'; // neon green default
 
+function updateCanvasPointerEvents() {
+  const canvas = document.getElementById('drawing-canvas-overlay');
+  if (canvas) {
+    if (drawingMode === 'cursor') {
+      canvas.style.pointerEvents = 'none';
+      canvas.style.cursor = 'default';
+    } else {
+      canvas.style.pointerEvents = 'auto';
+      canvas.style.cursor = 'crosshair';
+    }
+  }
+}
+
 // Initializer function for the Advanced Trading Terminal
 function initTerminalChart() {
   const mainContainer = document.getElementById('terminal-main-chart');
@@ -1872,6 +1894,7 @@ function initTerminalChart() {
       if (tool) {
         btn.classList.add('active');
         drawingMode = tool;
+        updateCanvasPointerEvents();
       }
     });
   });
@@ -2324,6 +2347,8 @@ function initDrawingOverlayCanvas() {
   canvas.width = container.clientWidth;
   canvas.height = container.clientHeight;
 
+  updateCanvasPointerEvents();
+
   // Listen to drawing trigger coordinate points
   canvas.addEventListener('mousedown', (e) => {
     if (drawingMode === 'cursor') return;
@@ -2385,6 +2410,7 @@ function initDrawingOverlayCanvas() {
       
       // Select cursor mode again after a shape finishes drawing
       drawingMode = 'cursor';
+      updateCanvasPointerEvents();
       const cursorBtn = document.querySelector('.tool-btn[data-tool="cursor"]');
       if (cursorBtn) {
         document.querySelectorAll('.tool-btn').forEach(b => b.classList.remove('active'));
