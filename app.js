@@ -742,6 +742,13 @@ function openVideoModal(video) {
 
   overlay.classList.add('active');
   document.body.style.overflow = 'hidden'; // stop page scrolling
+
+  // Reset scrollbar position to the top after DOM rendering
+  const details = document.querySelector('.modal-details');
+  if (details) {
+    details.scrollTop = 0;
+    setTimeout(() => { details.scrollTop = 0; }, 50);
+  }
 }
 
 function closeVideoModal() {
@@ -1018,9 +1025,6 @@ function openBookModal(book) {
 
   if (!overlay || !banner) return;
 
-  const details = document.querySelector('.modal-details');
-  if (details) details.scrollTop = 0;
-
   banner.className = 'modal-iframe-wrapper has-banner';
 
   tag.textContent = book.category;
@@ -1053,6 +1057,13 @@ function openBookModal(book) {
 
   overlay.classList.add('active');
   document.body.style.overflow = 'hidden';
+
+  // Reset scrollbar position to the top after DOM rendering
+  const details = document.querySelector('.modal-details');
+  if (details) {
+    details.scrollTop = 0;
+    setTimeout(() => { details.scrollTop = 0; }, 50);
+  }
 }
 
 // ==========================================
@@ -1616,9 +1627,6 @@ function openNewsModal(news) {
 
   if (!overlay || !banner) return;
 
-  const details = document.querySelector('.modal-details');
-  if (details) details.scrollTop = 0;
-
   banner.className = 'modal-iframe-wrapper has-banner';
 
   tag.textContent = news.categoryText;
@@ -1641,6 +1649,13 @@ function openNewsModal(news) {
 
   overlay.classList.add('active');
   document.body.style.overflow = 'hidden';
+
+  // Reset scrollbar position to the top after DOM rendering
+  const details = document.querySelector('.modal-details');
+  if (details) {
+    details.scrollTop = 0;
+    setTimeout(() => { details.scrollTop = 0; }, 50);
+  }
 }
 
 // ==========================================
