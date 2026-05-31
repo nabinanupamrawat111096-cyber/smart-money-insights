@@ -1558,13 +1558,51 @@ footer {
     padding: 1rem 1.5rem;
   }
   nav {
-    display: none; /* simple display block via JS or dropdown in future */
+    display: none;
+  }
+  nav.active {
+    display: block;
+    position: absolute;
+    top: 100%;
+    left: 0;
+    width: 100%;
+    background-color: rgba(7, 22, 16, 0.98);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    padding: 1.25rem 0;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+    z-index: 1000;
+  }
+  nav.active ul {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.5rem;
+    padding: 0 1.5rem;
+  }
+  nav.active ul li {
+    width: 100%;
+  }
+  nav.active ul li a {
+    display: block;
+    padding: 0.75rem 1rem;
+    text-align: center;
+    border-radius: 8px;
+    font-size: 0.95rem;
   }
   .nav-cta {
     display: none;
   }
   .mobile-toggle {
     display: block;
+    color: #ffffff;
+    font-size: 1.75rem;
+    padding: 0.25rem 0.5rem;
+    cursor: pointer;
+    transition: var(--transition);
+  }
+  .mobile-toggle:hover {
+    color: var(--color-success);
   }
   
   main {
