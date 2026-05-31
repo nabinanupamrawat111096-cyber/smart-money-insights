@@ -20,7 +20,8 @@
   <meta property="twitter:description" content="Clear, practical guidance on budgeting, saving, investing, and managing debt. No jargon, no get-rich-quick schemes—just honest advice that works.">
   <meta property="twitter:image" content="https://images.unsplash.com/photo-1559526324-4b87b5e36e44?auto=format&fit=crop&w=1200&h=630&q=80">
 
-  <link rel="stylesheet" href="styles.css?v=8">
+  <link rel="stylesheet" href="styles.css?v=9">
+  <script src="https://unpkg.com/lightweight-charts@4.1.1/dist/lightweight-charts.standalone.production.js"></script>
 </head>
 <body>
 
@@ -86,56 +87,74 @@
             </div>
           </div>
           
-          <div class="hero-visual">
-            <div class="visual-glow"></div>
-            <!-- Glassmorphic Card 1: Compound Growth -->
-            <div class="floating-card card-growth" style="--float-delay: 0s;">
-              <div class="card-header-mini">
-                <span class="card-tag-mini success">Portfolio Growth</span>
-                <span class="card-percent-mini">+12.4% YTD</span>
+          <div class="hero-visual nepse-chart-visual">
+            <div class="nepse-chart-widget">
+              <!-- Chart Header -->
+              <div class="chart-widget-header">
+                <div class="chart-title-row">
+                  <div class="chart-symbol-info">
+                    <span class="chart-symbol-name">NEPSE</span>
+                    <span class="chart-symbol-label">Nepal Stock Exchange Index</span>
+                  </div>
+                  <div class="chart-live-badge">
+                    <span class="live-dot"></span> Live
+                  </div>
+                </div>
+                <div class="chart-price-row" id="nepse-price-display">
+                  <span class="chart-current-price">2,745.32</span>
+                  <span class="chart-price-change positive">+38.67 (+1.43%)</span>
+                </div>
               </div>
-              <div class="card-value-mini">Rs. 1,428,500</div>
-              <svg class="mini-chart-svg" viewBox="0 0 100 40">
-                <path d="M0,35 Q20,32 40,22 T80,8 T100,2" fill="none" stroke="var(--color-success)" stroke-width="2.5" />
-                <circle cx="100" cy="2" r="3.5" fill="var(--color-success)" class="pulsing-chart-dot" />
-              </svg>
-            </div>
-            
-            <!-- Glassmorphic Card 2: Budget split -->
-            <div class="floating-card card-budget" style="--float-delay: 1.5s;">
-              <div class="budget-circle-progress">
-                <svg width="36" height="36" viewBox="0 0 36 36">
-                  <path class="circle-bg" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="var(--color-border)" stroke-width="3" />
-                  <path class="circle-fill" stroke-dasharray="80, 100" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="var(--color-primary)" stroke-width="3.5" />
-                </svg>
-                <div class="circle-text">80%</div>
-              </div>
-              <div class="budget-details-mini">
-                <span class="mini-label">Budget Allocated</span>
-                <span class="mini-status">Optimal</span>
-              </div>
-            </div>
 
-            <!-- Glassmorphic Card 3: Debt Paydown -->
-            <div class="floating-card card-debt" style="--float-delay: 3s;">
-              <div class="card-header-mini">
-                <span class="card-tag-mini error">Debt Free Progress</span>
+              <!-- Timeframe & Indicator Controls -->
+              <div class="chart-controls-bar">
+                <div class="chart-timeframes">
+                  <button class="tf-btn" data-tf="1D">1D</button>
+                  <button class="tf-btn active" data-tf="1W">1W</button>
+                  <button class="tf-btn" data-tf="1M">1M</button>
+                  <button class="tf-btn" data-tf="3M">3M</button>
+                  <button class="tf-btn" data-tf="6M">6M</button>
+                  <button class="tf-btn" data-tf="1Y">1Y</button>
+                </div>
+                <div class="chart-indicator-toggles">
+                  <button class="ind-btn active" data-ind="sma" title="Simple Moving Average">SMA</button>
+                  <button class="ind-btn" data-ind="ema" title="Exponential Moving Average">EMA</button>
+                  <button class="ind-btn active" data-ind="bb" title="Bollinger Bands">BB</button>
+                  <button class="ind-btn" data-ind="vol" title="Volume">VOL</button>
+                </div>
               </div>
-              <div class="progress-bar-mini">
-                <div class="progress-fill-mini" style="width: 65%;"></div>
+
+              <!-- Main Chart Container -->
+              <div class="chart-canvas-wrapper">
+                <div id="nepse-main-chart" class="chart-canvas"></div>
               </div>
-              <div class="debt-values-mini">
-                <span>Remaining: Rs. 85,000</span>
-                <span class="success-text">-65%</span>
+
+              <!-- RSI Panel -->
+              <div class="chart-indicator-panel">
+                <div class="indicator-panel-header">
+                  <span class="indicator-label">RSI (14)</span>
+                  <span class="indicator-value" id="rsi-value">58.42</span>
+                </div>
+                <div id="nepse-rsi-chart" class="indicator-canvas"></div>
               </div>
-            </div>
-            
-            <!-- Floating Decorative Stock Pills -->
-            <div class="floating-pill pill-nepse" style="--float-delay: 0.8s;">
-              <span class="pill-dot"></span> NEPSE Breakout
-            </div>
-            <div class="floating-pill pill-sip" style="--float-delay: 2.2s;">
-              🔥 SIP Active
+
+              <!-- MACD Panel -->
+              <div class="chart-indicator-panel">
+                <div class="indicator-panel-header">
+                  <span class="indicator-label">MACD (12,26,9)</span>
+                  <span class="indicator-value" id="macd-value">
+                    <span style="color:#2962FF">MACD: 12.5</span>
+                    <span style="color:#FF6D00">Signal: 8.3</span>
+                  </span>
+                </div>
+                <div id="nepse-macd-chart" class="indicator-canvas"></div>
+              </div>
+
+              <!-- Chart Footer -->
+              <div class="chart-widget-footer">
+                <span class="chart-source">Data: NEPSE • Updated every trading session</span>
+                <a href="https://www.nepalstock.com/" target="_blank" class="chart-link">nepalstock.com ↗</a>
+              </div>
             </div>
           </div>
         </div>
