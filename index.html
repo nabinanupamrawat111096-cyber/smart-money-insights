@@ -70,16 +70,73 @@
 
       <!-- 1. HOME VIEW -->
       <section id="home" class="section-view active">
-        <div class="hero">
-          <div class="hero-logo-wrapper">
-            <img src="logo.png" alt="Smart Money Insights Logo" class="hero-logo">
+        <div class="hero-container">
+          <div class="hero-content">
+            <div class="hero-brand-header">
+              <div class="hero-logo-wrapper">
+                <img src="logo.png" alt="Smart Money Insights Logo" class="hero-logo">
+              </div>
+              <span class="badge">Practical Financial Education</span>
+            </div>
+            <h1>Clear financial <br><span class="serif-italic">guidance.</span></h1>
+            <p>We simplify complex market charts, saving strategies, and debt cycles into actionable insights. Practical frameworks designed to empower your wealth-building journey.</p>
+            <div class="hero-ctas">
+              <a href="#" data-go-to="budgeting" class="btn-primary">Try Calculators</a>
+              <a href="#" data-go-to="videos" class="btn-secondary">Watch Analysis</a>
+            </div>
           </div>
-          <span class="badge">Practical Financial Education</span>
-          <h1>Clear financial <br><span class="serif-italic">guidance.</span></h1>
-          <p>We simplify complex market charts, saving strategies, and debt cycles into actionable insights. Practical frameworks designed to empower your wealth-building journey.</p>
-          <div class="hero-ctas">
-            <a href="#" data-go-to="budgeting" class="btn-primary">Try Calculators</a>
-            <a href="#" data-go-to="videos" class="btn-secondary">Watch Analysis</a>
+          
+          <div class="hero-visual">
+            <div class="visual-glow"></div>
+            <!-- Glassmorphic Card 1: Compound Growth -->
+            <div class="floating-card card-growth" style="--float-delay: 0s;">
+              <div class="card-header-mini">
+                <span class="card-tag-mini success">Portfolio Growth</span>
+                <span class="card-percent-mini">+12.4% YTD</span>
+              </div>
+              <div class="card-value-mini">Rs. 1,428,500</div>
+              <svg class="mini-chart-svg" viewBox="0 0 100 40">
+                <path d="M0,35 Q20,32 40,22 T80,8 T100,2" fill="none" stroke="var(--color-success)" stroke-width="2.5" />
+                <circle cx="100" cy="2" r="3.5" fill="var(--color-success)" class="pulsing-chart-dot" />
+              </svg>
+            </div>
+            
+            <!-- Glassmorphic Card 2: Budget split -->
+            <div class="floating-card card-budget" style="--float-delay: 1.5s;">
+              <div class="budget-circle-progress">
+                <svg width="36" height="36" viewBox="0 0 36 36">
+                  <path class="circle-bg" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="var(--color-border)" stroke-width="3" />
+                  <path class="circle-fill" stroke-dasharray="80, 100" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="var(--color-primary)" stroke-width="3.5" />
+                </svg>
+                <div class="circle-text">80%</div>
+              </div>
+              <div class="budget-details-mini">
+                <span class="mini-label">Budget Allocated</span>
+                <span class="mini-status">Optimal</span>
+              </div>
+            </div>
+
+            <!-- Glassmorphic Card 3: Debt Paydown -->
+            <div class="floating-card card-debt" style="--float-delay: 3s;">
+              <div class="card-header-mini">
+                <span class="card-tag-mini error">Debt Free Progress</span>
+              </div>
+              <div class="progress-bar-mini">
+                <div class="progress-fill-mini" style="width: 65%;"></div>
+              </div>
+              <div class="debt-values-mini">
+                <span>Remaining: Rs. 85,000</span>
+                <span class="success-text">-65%</span>
+              </div>
+            </div>
+            
+            <!-- Floating Decorative Stock Pills -->
+            <div class="floating-pill pill-nepse" style="--float-delay: 0.8s;">
+              <span class="pill-dot"></span> NEPSE Breakout
+            </div>
+            <div class="floating-pill pill-sip" style="--float-delay: 2.2s;">
+              🔥 SIP Active
+            </div>
           </div>
         </div>
 
