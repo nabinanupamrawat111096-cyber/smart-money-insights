@@ -6,6 +6,7 @@ document.addEventListener('DOMContentLoaded', () => {
   initEducation();
   initNews();
   initNewsletter();
+  initNepseChart();
 });
 
 // ==========================================
@@ -1243,4 +1244,504 @@ function openNewsModal(news) {
 
   overlay.classList.add('active');
   document.body.style.overflow = 'hidden';
+}
+
+// ==========================================
+// TECHNICAL INDICATOR CALCULATORS FOR NEPSE CHART
+// ==========================================
+function calculateSMA(data, period) {
+  const sma = [];
+  for (let i = 0; i < data.length; i++) {
+    if (i < period - 1) {
+      sma.push({ time: data[i].time, value: data[i].close });
+      continue;
+    }
+    let sum = 0;
+    for (let j = 0; j < period; j++) {
+      sum += data[i - j].close;
+    }
+    sma.push({ time: data[i].time, value: sum / period });
+  }
+  return sma;
+}
+
+function calculateEMA(data, period) {
+  const ema = [];
+  if (data.length === 0) return ema;
+  let prevEma = data[0].close;
+  const multiplier = 2 / (period + 1);
+  ema.push({ time: data[0].time, value: prevEma });
+  
+  for (let i = 1; i < data.length; i++) {
+    const val = (data[i].close - prevEma) * multiplier + prevEma;
+    ema.push({ time: data[i].time, value: val });
+    prevEma = val;
+  }
+  return ema;
+}
+
+function calculateBollingerBands(data, period, multiplier) {
+  const upper = [];
+  const middle = [];
+  const lower = [];
+  const sma = calculateSMA(data, period);
+  
+  for (let i = 0; i < data.length; i++) {
+    if (i < period - 1) {
+      middle.push({ time: data[i].time, value: sma[i].value });
+      upper.push({ time: data[i].time, value: sma[i].value });
+      lower.push({ time: data[i].time, value: sma[i].value });
+      continue;
+    }
+    
+    const midVal = sma[i].value;
+    let sumSq = 0;
+    for (let j = 0; j < period; j++) {
+      const diff = data[i - j].close - midVal;
+      sumSq += diff * diff;
+    }
+    const stdDev = Math.sqrt(sumSq / period);
+    
+    middle.push({ time: data[i].time, value: midVal });
+    upper.push({ time: data[i].time, value: midVal + multiplier * stdDev });
+    lower.push({ time: data[i].time, value: midVal - multiplier * stdDev });
+  }
+  
+  return { upper, middle, lower };
+}
+
+function calculateRSI(data, period) {
+  const rsi = [];
+  let avgGain = 0;
+  let avgLoss = 0;
+
+  for (let i = 0; i < data.length; i++) {
+    if (i === 0) {
+      rsi.push({ time: data[i].time, value: 50 });
+      continue;
+    }
+
+    const change = data[i].close - data[i - 1].close;
+    const gain = change > 0 ? change : 0;
+    const loss = change < 0 ? -change : 0;
+
+    if (i <= period) {
+      avgGain += gain;
+      avgLoss += loss;
+      
+      if (i === period) {
+        avgGain /= period;
+        avgLoss /= period;
+        const rs = avgLoss === 0 ? 100 : avgGain / avgLoss;
+        rsi.push({ time: data[i].time, value: 100 - (100 / (1 + rs)) });
+      } else {
+        rsi.push({ time: data[i].time, value: 50 });
+      }
+    } else {
+      avgGain = (avgGain * (period - 1) + gain) / period;
+      avgLoss = (avgLoss * (period - 1) + loss) / period;
+      const rs = avgLoss === 0 ? 100 : avgGain / avgLoss;
+      rsi.push({ time: data[i].time, value: 100 - (100 / (1 + rs)) });
+    }
+  }
+  return rsi;
+}
+
+function calculateMACD(data) {
+  const ema12 = calculateEMA(data, 12);
+  const ema26 = calculateEMA(data, 26);
+  
+  const macdLine = [];
+  for (let i = 0; i < data.length; i++) {
+    macdLine.push({ time: data[i].time, value: ema12[i].value - ema26[i].value });
+  }
+  
+  const macdData = macdLine.map(d => ({ time: d.time, close: d.value }));
+  const signalLine = calculateEMA(macdData, 9);
+  
+  const histogram = [];
+  for (let i = 0; i < data.length; i++) {
+    histogram.push({
+      time: data[i].time,
+      value: macdLine[i].value - signalLine[i].value
+    });
+  }
+  
+  return { macdLine, signalLine, histogram };
+}
+
+// ==========================================
+// NEPSE LIVE CHART CONTROLLER (TradingView Lightweight Charts)
+// ==========================================
+function initNepseChart() {
+  const mainContainer = document.getElementById('nepse-main-chart');
+  const rsiContainer = document.getElementById('nepse-rsi-chart');
+  const macdContainer = document.getElementById('nepse-macd-chart');
+  
+  if (!mainContainer || !rsiContainer || !macdContainer) return;
+  
+  // 1. Generate Daily Candlestick Data (250 Trading Days)
+  const dailyData = [];
+  const baseDate = new Date();
+  baseDate.setDate(baseDate.getDate() - 365); // 1 year ago
+  
+  let currentPrice = 2150;
+  for (let i = 0; i < 250; i++) {
+    baseDate.setDate(baseDate.getDate() + 1);
+    while (baseDate.getDay() === 5 || baseDate.getDay() === 6) { // Friday/Saturday are weekends in Nepal
+      baseDate.setDate(baseDate.getDate() + 1);
+    }
+    const timeStr = baseDate.toISOString().split('T')[0];
+    
+    let trend = 0;
+    if (i < 80) trend = 1.8;
+    else if (i < 160) trend = -0.8;
+    else trend = 3.6;
+    
+    const vol = 15;
+    const change = (Math.random() - 0.44) * vol + trend;
+    const open = Math.round((currentPrice) * 100) / 100;
+    
+    let close = Math.round((currentPrice + change) * 100) / 100;
+    if (i === 249) {
+      close = 2745.32;
+    }
+    
+    let high = Math.round((Math.max(open, close) + Math.random() * 8) * 100) / 100;
+    let low = Math.round((Math.min(open, close) - Math.random() * 8) * 100) / 100;
+    
+    if (i === 249) {
+      // Force last candle to match exactly 2745.32 (+38.67) and high/low details
+      dailyData.push({
+        time: timeStr,
+        open: 2706.65,
+        high: 2755.00,
+        low: 2698.50,
+        close: 2745.32,
+        volume: 8670000
+      });
+    } else {
+      dailyData.push({
+        time: timeStr,
+        open: open,
+        high: high,
+        low: low,
+        close: close,
+        volume: Math.round(5000000 + Math.random() * 7000000)
+      });
+      currentPrice = close;
+    }
+  }
+  
+  // 2. Pre-calculate technical indicators
+  const smaData = calculateSMA(dailyData, 20);
+  const emaData = calculateEMA(dailyData, 9);
+  const bbData = calculateBollingerBands(dailyData, 20, 2);
+  const rsiData = calculateRSI(dailyData, 14);
+  const macdData = calculateMACD(dailyData);
+  
+  // 3. Render Main Candlestick & Volume Chart
+  const mainChart = LightweightCharts.createChart(mainContainer, {
+    layout: {
+      background: { type: 'solid', color: '#ffffff' },
+      textColor: '#6b7280',
+      fontSize: 10,
+    },
+    grid: {
+      vertLines: { color: '#f3f4f6' },
+      horzLines: { color: '#f3f4f6' },
+    },
+    timeScale: {
+      borderColor: '#e5e7eb',
+      timeVisible: false,
+      secondsVisible: false,
+    },
+    rightPriceScale: {
+      borderColor: '#e5e7eb',
+    },
+    crosshair: {
+      mode: LightweightCharts.CrosshairMode.Normal,
+    }
+  });
+  
+  const candlestickSeries = mainChart.addCandlestickSeries({
+    upColor: '#059669',
+    downColor: '#dc2626',
+    borderUpColor: '#059669',
+    borderDownColor: '#dc2626',
+    wickUpColor: '#059669',
+    wickDownColor: '#dc2626',
+  });
+  candlestickSeries.setData(dailyData);
+  
+  // Volume Overlay Series
+  const volumeData = dailyData.map(d => ({
+    time: d.time,
+    value: d.volume,
+    color: d.close >= d.open ? 'rgba(5, 150, 105, 0.15)' : 'rgba(220, 38, 38, 0.15)'
+  }));
+  const volumeSeries = mainChart.addHistogramSeries({
+    priceFormat: { type: 'volume' },
+    priceScaleId: 'volume',
+  });
+  volumeSeries.setData(volumeData);
+  mainChart.priceScale('volume').applyOptions({
+    scaleMargins: { top: 0.8, bottom: 0 },
+  });
+  
+  // SMA Series
+  const smaSeries = mainChart.addLineSeries({
+    color: '#2563eb',
+    lineWidth: 1.5,
+    title: 'SMA 20',
+  });
+  smaSeries.setData(smaData);
+  
+  // EMA Series
+  const emaSeries = mainChart.addLineSeries({
+    color: '#ea580c',
+    lineWidth: 1.5,
+    title: 'EMA 9',
+  });
+  emaSeries.setData(emaData);
+  
+  // Bollinger Bands Series
+  const bbUpperSeries = mainChart.addLineSeries({ color: 'rgba(201, 162, 39, 0.4)', lineWidth: 1, lineStyle: LightweightCharts.LineStyle.Dotted });
+  const bbMiddleSeries = mainChart.addLineSeries({ color: 'rgba(201, 162, 39, 0.3)', lineWidth: 1, lineStyle: LightweightCharts.LineStyle.Dashed });
+  const bbLowerSeries = mainChart.addLineSeries({ color: 'rgba(201, 162, 39, 0.4)', lineWidth: 1, lineStyle: LightweightCharts.LineStyle.Dotted });
+  
+  bbUpperSeries.setData(bbData.upper);
+  bbMiddleSeries.setData(bbData.middle);
+  bbLowerSeries.setData(bbData.lower);
+  
+  // 4. Render RSI Sub-panel Chart
+  const rsiChart = LightweightCharts.createChart(rsiContainer, {
+    layout: {
+      background: { type: 'solid', color: '#ffffff' },
+      textColor: '#6b7280',
+      fontSize: 10,
+    },
+    grid: {
+      vertLines: { color: '#f3f4f6' },
+      horzLines: { color: '#f3f4f6' },
+    },
+    timeScale: {
+      borderColor: '#e5e7eb',
+      visible: false,
+    },
+    rightPriceScale: {
+      borderColor: '#e5e7eb',
+    },
+    crosshair: {
+      mode: LightweightCharts.CrosshairMode.Normal,
+    }
+  });
+  
+  const rsiLineSeries = rsiChart.addLineSeries({
+    color: '#7e57c2',
+    lineWidth: 1.5,
+  });
+  rsiLineSeries.setData(rsiData);
+  
+  // RSI reference lines at 30, 50, 70
+  const rsi30 = rsiChart.addLineSeries({ color: 'rgba(220, 38, 38, 0.25)', lineWidth: 1, lineStyle: LightweightCharts.LineStyle.Dashed });
+  const rsi50 = rsiChart.addLineSeries({ color: 'rgba(107, 114, 128, 0.15)', lineWidth: 1 });
+  const rsi70 = rsiChart.addLineSeries({ color: 'rgba(5, 150, 105, 0.25)', lineWidth: 1, lineStyle: LightweightCharts.LineStyle.Dashed });
+  
+  const refTimeData = dailyData.map(d => d.time);
+  rsi30.setData(refTimeData.map(t => ({ time: t, value: 30 })));
+  rsi50.setData(refTimeData.map(t => ({ time: t, value: 50 })));
+  rsi70.setData(refTimeData.map(t => ({ time: t, value: 70 })));
+  
+  // 5. Render MACD Sub-panel Chart
+  const macdChart = LightweightCharts.createChart(macdContainer, {
+    layout: {
+      background: { type: 'solid', color: '#ffffff' },
+      textColor: '#6b7280',
+      fontSize: 10,
+    },
+    grid: {
+      vertLines: { color: '#f3f4f6' },
+      horzLines: { color: '#f3f4f6' },
+    },
+    timeScale: {
+      borderColor: '#e5e7eb',
+      visible: false,
+    },
+    rightPriceScale: {
+      borderColor: '#e5e7eb',
+    },
+    crosshair: {
+      mode: LightweightCharts.CrosshairMode.Normal,
+    }
+  });
+  
+  const macdLineSeries = macdChart.addLineSeries({
+    color: '#2563eb',
+    lineWidth: 1.5,
+  });
+  macdLineSeries.setData(macdData.macdLine);
+  
+  const signalLineSeries = macdChart.addLineSeries({
+    color: '#ea580c',
+    lineWidth: 1.5,
+  });
+  signalLineSeries.setData(macdData.signalLine);
+  
+  const macdHistSeries = macdChart.addHistogramSeries({});
+  const histData = macdData.histogram.map(d => ({
+    time: d.time,
+    value: d.value,
+    color: d.value >= 0 ? 'rgba(5, 150, 105, 0.4)' : 'rgba(220, 38, 38, 0.4)'
+  }));
+  macdHistSeries.setData(histData);
+  
+  // 6. Synchronize time scales of the three charts
+  mainChart.timeScale().subscribeVisibleLogicalRangeChange(range => {
+    rsiChart.timeScale().setVisibleLogicalRange(range);
+    macdChart.timeScale().setVisibleLogicalRange(range);
+  });
+  rsiChart.timeScale().subscribeVisibleLogicalRangeChange(range => {
+    mainChart.timeScale().setVisibleLogicalRange(range);
+    macdChart.timeScale().setVisibleLogicalRange(range);
+  });
+  macdChart.timeScale().subscribeVisibleLogicalRangeChange(range => {
+    mainChart.timeScale().setVisibleLogicalRange(range);
+    rsiChart.timeScale().setVisibleLogicalRange(range);
+  });
+  
+  // Set initial visible range (1Y)
+  mainChart.timeScale().fitContent();
+  
+  // 7. Subscribe to crosshair movement to update legends
+  mainChart.subscribeCrosshairMove(param => {
+    updateLegends(param);
+  });
+  rsiChart.subscribeCrosshairMove(param => {
+    if (param.point && param.time) {
+      mainChart.setCrosshairPosition(null, param.time, candlestickSeries);
+      macdChart.setCrosshairPosition(null, param.time, macdLineSeries);
+    }
+    updateLegends(param);
+  });
+  macdChart.subscribeCrosshairMove(param => {
+    if (param.point && param.time) {
+      mainChart.setCrosshairPosition(null, param.time, candlestickSeries);
+      rsiChart.setCrosshairPosition(null, param.time, rsiLineSeries);
+    }
+    updateLegends(param);
+  });
+  
+  function updateLegends(param) {
+    let priceVal = 2745.32;
+    let changeVal = 38.67;
+    let pctVal = 1.43;
+    let rsiVal = 58.42;
+    let macdLineVal = 12.5;
+    let signalLineVal = 8.3;
+    
+    if (param.time) {
+      const candleData = param.seriesData.get(candlestickSeries);
+      if (candleData) {
+        priceVal = candleData.close;
+        const openVal = candleData.open;
+        changeVal = priceVal - openVal;
+        pctVal = (changeVal / openVal) * 100;
+      }
+      
+      const rsiDataVal = rsiData.find(d => d.time === param.time);
+      if (rsiDataVal) {
+        rsiVal = rsiDataVal.value.toFixed(2);
+      }
+      
+      const macdLineValObj = macdData.macdLine.find(d => d.time === param.time);
+      const signalLineValObj = macdData.signalLine.find(d => d.time === param.time);
+      if (macdLineValObj && signalLineValObj) {
+        macdLineVal = macdLineValObj.value.toFixed(2);
+        signalLineVal = signalLineValObj.value.toFixed(2);
+      }
+    } else {
+      const latestCandle = dailyData[dailyData.length - 1];
+      priceVal = latestCandle.close;
+      changeVal = 38.67;
+      pctVal = 1.43;
+      rsiVal = rsiData[rsiData.length - 1].value.toFixed(2);
+      macdLineVal = macdData.macdLine[macdData.macdLine.length - 1].value.toFixed(2);
+      signalLineVal = macdData.signalLine[macdData.signalLine.length - 1].value.toFixed(2);
+    }
+    
+    const priceDisplay = document.getElementById('nepse-price-display');
+    if (priceDisplay) {
+      priceDisplay.innerHTML = `
+        <span class="chart-current-price">${priceVal.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</span>
+        <span class="chart-price-change ${changeVal >= 0 ? 'positive' : 'negative'}">
+          ${changeVal >= 0 ? '+' : ''}${changeVal.toFixed(2)} (${changeVal >= 0 ? '+' : ''}${pctVal.toFixed(2)}%)
+        </span>
+      `;
+    }
+    
+    const rsiValEl = document.getElementById('rsi-value');
+    if (rsiValEl) rsiValEl.textContent = rsiVal;
+    
+    const macdValEl = document.getElementById('macd-value');
+    if (macdValEl) {
+      macdValEl.innerHTML = `
+        <span style="color:#2563eb">MACD: ${macdLineVal}</span>
+        <span style="color:#ea580c; margin-left: 8px;">Signal: ${signalLineVal}</span>
+      `;
+    }
+  }
+  
+  // 8. Timeframe button logic
+  const tfButtons = document.querySelectorAll('.tf-btn');
+  tfButtons.forEach(btn => {
+    btn.addEventListener('click', () => {
+      tfButtons.forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      
+      const tf = btn.getAttribute('data-tf');
+      let range = 250;
+      if (tf === '1D') range = 2; 
+      else if (tf === '1W') range = 7;
+      else if (tf === '1M') range = 20;
+      else if (tf === '3M') range = 60;
+      else if (tf === '6M') range = 120;
+      else if (tf === '1Y') range = 250;
+      
+      const toIndex = dailyData.length - 1;
+      const fromIndex = Math.max(0, toIndex - range);
+      
+      mainChart.timeScale().setVisibleRange({
+        from: dailyData[fromIndex].time,
+        to: dailyData[toIndex].time
+      });
+    });
+  });
+  
+  // 9. Indicator toggle logic
+  const indButtons = document.querySelectorAll('.ind-btn');
+  indButtons.forEach(btn => {
+    btn.addEventListener('click', () => {
+      btn.classList.toggle('active');
+      const ind = btn.getAttribute('data-ind');
+      const isActive = btn.classList.contains('active');
+      
+      if (ind === 'sma') smaSeries.applyOptions({ visible: isActive });
+      else if (ind === 'ema') emaSeries.applyOptions({ visible: isActive });
+      else if (ind === 'bb') {
+        bbUpperSeries.applyOptions({ visible: isActive });
+        bbMiddleSeries.applyOptions({ visible: isActive });
+        bbLowerSeries.applyOptions({ visible: isActive });
+      }
+      else if (ind === 'vol') volumeSeries.applyOptions({ visible: isActive });
+    });
+  });
+  
+  // 10. Handle resizing
+  window.addEventListener('resize', () => {
+    const w = mainContainer.clientWidth;
+    mainChart.resize(w, 220);
+    rsiChart.resize(w, 55);
+    macdChart.resize(w, 55);
+  });
 }
