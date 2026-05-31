@@ -1,4 +1,4 @@
-﻿document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', () => {
   initRouter();
   initMiniCalcSwitcher();
   initCalculators();
@@ -721,6 +721,9 @@ function openVideoModal(video) {
 
   if (!overlay || !iframeWrapper) return;
 
+  const details = document.querySelector('.modal-details');
+  if (details) details.scrollTop = 0;
+
   tag.textContent = video.category;
   title.textContent = video.title;
   desc.textContent = video.desc;
@@ -1014,6 +1017,9 @@ function openBookModal(book) {
   const desc = document.getElementById('modal-video-desc');
 
   if (!overlay || !banner) return;
+
+  const details = document.querySelector('.modal-details');
+  if (details) details.scrollTop = 0;
 
   banner.className = 'modal-iframe-wrapper has-banner';
 
@@ -1609,6 +1615,9 @@ function openNewsModal(news) {
   const desc = document.getElementById('modal-video-desc');
 
   if (!overlay || !banner) return;
+
+  const details = document.querySelector('.modal-details');
+  if (details) details.scrollTop = 0;
 
   banner.className = 'modal-iframe-wrapper has-banner';
 
