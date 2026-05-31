@@ -107,17 +107,18 @@ header {
 nav ul {
   display: flex;
   list-style: none;
-  gap: 1.5rem;
+  gap: 1.15rem;
   align-items: center;
 }
 
 nav ul li a {
-  font-size: 0.925rem;
+  font-size: 0.875rem;
   font-weight: 550;
-  padding: 0.5rem 0.85rem;
+  padding: 0.45rem 0.75rem;
   border-radius: 8px;
   color: var(--color-muted);
   transition: var(--transition);
+  white-space: nowrap;
 }
 
 nav ul li a:hover {
